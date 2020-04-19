@@ -1,22 +1,22 @@
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
+import com.google.protobuf.gradle.*
+import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 buildscript {
     repositories {
         mavenCentral()
     }
-    dependencies {
-        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.72")
-    }
+//    dependencies {
+//        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
+//        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.72")
+//    }
 }
 
 plugins {
-    kotlin("jvm") version "1.3.71"
+    kotlin("jvm") version "1.3.72"
     `maven-publish`
     application
     id("com.github.ben-manes.versions") version "0.28.0"
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+//    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
     id("net.nemerosa.versioning") version "2.8.2"
     id("com.google.protobuf") version "0.8.12"
 }
@@ -51,6 +51,8 @@ dependencies {
     implementation(kotlin("stdlib-jdk8"))
     implementation("io.grpc:grpc-kotlin-stub:0.1.1")
 
+    compile("javax.annotation:javax.annotation-api:1.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
     implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.11")
     implementation("com.google.protobuf:protobuf-java:3.11.1")
     implementation("com.google.protobuf:protobuf-java-util:3.11.1")
@@ -61,26 +63,22 @@ dependencies {
 
 protobuf {
     protoc { artifact = "com.google.protobuf:protoc:3.11.4" }
-//    plugins {
-        // Specify protoc to generate using kotlin protobuf plugin
-//        grpc {
-//            artifact = "io.grpc:protoc-gen-grpc-java:1.28.1"
-//        }
-//        // Specify protoc to generate using our grpc kotlin plugin
-//        grpckt {
-//            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.1"
-//        }
-//    }
-//    generateProtoTasks {
-//        all().each { task ->
-//            task.plugins {
-//                // Generate Java gRPC classes
-//                grpc { }
-//                // Generate Kotlin gRPC using the custom plugin from library
-//                grpckt { }
-//            }
-//        }
-//    }
+    plugins {
+        id("grpc") {
+            artifact = "io.grpc:protoc-gen-grpc-java:1.28.1"
+        }
+        id("grpckt") {
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.1"
+        }
+    }
+    generateProtoTasks {
+        ofSourceSet("main").forEach {
+            it.plugins {
+                id("grpc")
+                id("grpckt")
+            }
+        }
+    }
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
