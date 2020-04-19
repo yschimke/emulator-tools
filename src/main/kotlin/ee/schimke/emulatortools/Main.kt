@@ -43,7 +43,7 @@ class Main : Runnable, Closeable {
         }
     })
 
-    val channel = lazy { ManagedChannelBuilder.forTarget("localhost:8554").usePlaintext().build() }
+    val channel = lazy { ManagedChannelBuilder.forTarget("localhost:$port").usePlaintext().build() }
 
     val client by lazy { EmulatorControllerGrpcKt.EmulatorControllerCoroutineStub(channel.value) }
 
