@@ -5,10 +5,6 @@ buildscript {
     repositories {
         mavenCentral()
     }
-//    dependencies {
-//        classpath("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
-//        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.72")
-//    }
 }
 
 plugins {
@@ -16,7 +12,6 @@ plugins {
     `maven-publish`
     application
     id("com.github.ben-manes.versions") version "0.28.0"
-//    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
     id("net.nemerosa.versioning") version "2.8.2"
     id("com.google.protobuf") version "0.8.12"
 }
@@ -44,7 +39,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 application {
-    mainClassName = "ee.schimke.emulatortools.Main"
+    mainClassName = "ee.schimke.emulatortools.MainKt"
 }
 
 dependencies {
@@ -77,6 +72,17 @@ protobuf {
                 id("grpc")
                 id("grpckt")
             }
+            it.generateDescriptorSet = true
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            srcDirs("build/generated/source/proto/main/java")
+            srcDirs("build/generated/source/proto/main/grpc")
+            srcDirs("build/generated/source/proto/main/grpckt")
         }
     }
 }
