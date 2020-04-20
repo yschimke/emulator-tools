@@ -12,6 +12,12 @@ See licenses in individual proto files
 
 otherwise any test code is available under this license
 
+# Run headless emulator
+
+```
+$ emulator -no-window @pixel5 -grpc 8554
+```
+
 # Running from checkout
 
 ```
