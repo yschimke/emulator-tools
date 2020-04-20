@@ -11,3 +11,14 @@ https://github.com/aosp-mirror/platform_external_qemu/tree/58add8934660d8c8984d7
 See licenses in individual proto files
 
 otherwise any test code is available under this license
+
+# Running from checkout
+
+```
+$ ./grdalew installDist
+
+$ ./build/install/emulator-tools/bin/emulator-tools --screenshot
+```
+
+![image](https://user-images.githubusercontent.com/231923/79718336-b84d3780-82d3-11ea-9f40-4f48b0ccc8bf.png)
+
