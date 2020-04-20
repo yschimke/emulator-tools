@@ -15,7 +15,7 @@ otherwise any test code is available under this license
 # Running from checkout
 
 ```
-$ ./grdalew installDist
+$ ./gradlew installDist
 
 $ ./build/install/emulator-tools/bin/emulator-tools --screenshot
 ```
