@@ -11,6 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Note that if you add/remove methods in this file you must update
+// the metrics sql as well ./android/scripts/gen-grpc-sql.py
+//
+// Please group deleted methods in a block including the date (MM/DD/YY)
+// it was removed. This enables us to easily keep metrics around after removal
+//
+// List of deleted methods
+// rpc iWasDeleted (03/12/12)
+// ...
 syntax = "proto3";
 
 option java_multiple_files = true;
@@ -46,13 +56,40 @@ service EmulatorController {
   rpc streamPhysicalModel(PhysicalModelValue)
       returns (stream PhysicalModelValue) {}
 
+  // Atomically set/get the current primary clipboard data.
+  rpc setClipboard(ClipData) returns (google.protobuf.Empty) {}
+  rpc getClipboard(google.protobuf.Empty) returns (ClipData) {}
+
+  // Streams the current data on the clipboard. This will immediately produce
+  // a result with the current state of the clipboard after which the stream
+  // will block and wait until a new clip event is available from the guest.
+  // Calling the setClipboard method above will not result in generating a clip
+  // event. It is possible to lose clipboard events if the clipboard updates
+  // very rapidly.
+  rpc streamClipboard(google.protobuf.Empty) returns (stream ClipData) {}
+
   // Set/get the battery to the given state.
   rpc setBattery(BatteryState) returns (google.protobuf.Empty) {}
   rpc getBattery(google.protobuf.Empty) returns (BatteryState) {}
 
-  // Set/get the state of the gps.
-  rpc getGps(google.protobuf.Empty) returns (GpsState) {}
+  // Set the state of the gps, gps support will only work
+  // properly if:
+  //
+  // - no location ui is active. That is the emulator
+  //   is launched in headless mode (-no-window) or the location
+  //   ui is disabled (-no-location-ui).
+  // - the passiveUpdate is set to false. Setting this to false
+  //   will disable/break the LocationUI.
+  //
+  // Keep in mind that android usually only samples the gps at 1 hz.
   rpc setGps(GpsState) returns (google.protobuf.Empty) {}
+
+  // Gets the latest gps state as delivered by the setGps call, or location ui
+  // if active.
+  //
+  // Note: this is not neccessarily the actual gps coordinate visible at the
+  // time, due to gps sample frequency (usually 1hz).
+  rpc getGps(google.protobuf.Empty) returns (GpsState) {}
 
   // Simulate a touch event on the finger print sensor.
   rpc sendFingerprint(Fingerprint) returns (google.protobuf.Empty) {}
@@ -67,6 +104,9 @@ service EmulatorController {
 
   // Make a phone call.
   rpc sendPhone(PhoneCall) returns (PhoneResponse) {}
+
+  // Sends an sms message to the emulator.
+  rpc sendSms(SmsMessage) returns (PhoneResponse) {}
 
   // Retrieve the status of the emulator. This will contain general
   // hardware information, and whether the device has booted or not.
@@ -96,6 +136,11 @@ service EmulatorController {
   // and wait start producing images once the display becomes active, again
   // producing a single empty image when the display becomes inactive.
   rpc streamScreenshot(ImageFormat) returns (stream Image) {}
+
+  // Streams a series of audio packets in the desired format.
+  // A new frame will be delivered whenever the emulated device
+  // produces a new audio frame.
+  rpc streamAudio(AudioFormat) returns (stream AudioPacket) {}
 
   // Returns the last 128Kb of logcat output from the emulator
   // Note that parsed logcat messages are only available after L (Api >23).
@@ -251,7 +296,6 @@ message SensorValue {
   ParameterValue value = 3;
 }
 
-
 message LogMessage {
   // [Output Only] The contents of the log output.
   string contents = 1;
@@ -343,6 +387,12 @@ message VmConfiguration {
   VmHypervisorType hypervisorType = 1;
   int32 numberOfCpuCores = 2;
   int64 ramSizeBytes = 3;
+}
+
+// Representation of a clipped data object on the clipboard.
+message ClipData {
+  // UTF-8 Encoded text.
+  string text = 1;
 }
 
 // The Touch interface represents a single contact point on a
@@ -532,6 +582,13 @@ message Fingerprint {
 }
 
 message GpsState {
+  // Setting this to false will disable auto updating  from the LocationUI,
+  // otherwise the location UI will override the location at a frequency of 1hz.
+  //
+  // - This is unused if the emulator is launched with -no-window, or when he
+  //   location ui is disabled.
+  // - This will BREAK the location ui experience if it is set to false. For
+  //    example routing will no longer function.
   bool passiveUpdate = 1;
 
   // The latitude, in degrees.
@@ -715,3 +772,45 @@ message EmulatorStatus {
   // key valure pairs.
   EntryList hardwareConfig = 5;
 };
+
+message AudioFormat {
+  enum SampleFormat {
+    AUD_FMT_U8 = 0;  // Unsigned 8 bit
+    AUD_FMT_S16 = 1; // Signed 16 bit (little endian)
+  };
+
+  enum Channels {
+    Mono = 0;
+    Stereo = 1;
+  };
+
+  // Sampling rate to use, defaulting to 44100 if this is not set.
+  // Note, that android devices typically will not use a sampling
+  // rate higher than 48kHz. See https://developer.android.com/ndk/guides/audio.
+  uint64 samplingRate = 1;
+  Channels channels = 2;
+  SampleFormat format = 3;
+};
+
+message AudioPacket {
+  AudioFormat format = 1;
+
+  // Unix epoch in us when this frame was captured.
+  uint64 timestamp = 2;
+
+  // Contains a sample in the given audio format.
+  bytes audio = 3;
+}
+
+message SmsMessage {
+  // The source address where this message came from.
+  //
+  // The address should be a valid GSM-formatted address as specified by
+  // 3GPP 23.040 Sec 9.1.2.5.
+  //
+  // For example: +3106225412 or (650) 555-1221
+  string srcAddress = 1;
+
+  // A utf8 encoded text message that should be delivered.
+  string text = 2;
+}

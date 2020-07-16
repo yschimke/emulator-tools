@@ -11,6 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
+// Note that if you add/remove methods in this file you must update
+// the metrics sql as well by running ./android/scripts/gen-grpc-sql.py
+//
+// Please group deleted methods in a block including the date (MM/DD/YY)
+// it was removed. This enables us to easily keep metrics around after removal
+//
+// List of deleted methods
+// rpc iWasDeleted (03/12/12)
+// ...
 syntax = "proto3";
 
 package android.emulation.control;
@@ -163,8 +173,8 @@ message IceboxTarget {
   // what you will find in your AndroidManifest.xml
   string package_name = 2;
 
-  // [Output Only] The name of the snapshot that icebox will create if a
-  // snapshot is generated.
+  // The name of the snapshot that icebox will create if a snapshot is
+  // generated.
   string snapshot_id = 3;
 
   // [Output Only] True if icebox failed to track the given target.
@@ -173,3 +183,7 @@ message IceboxTarget {
   // [Output Only] Detailed error message that might provide more information.
   string err = 5;
 }
+
+
+// List of deleted methods:
+//
