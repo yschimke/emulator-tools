@@ -53,7 +53,7 @@ message SocketControl {
     enum Sort {
         identity = 0;  // Indicates the identify of the channel on which this
                        // message is sent.
-        open = 1;      // Request the client to open up a connection with the
+        openn = 1;      // Request the client to open up a connection with the
                        // requested id.
         close = 2;     // Indicate that the channel with the given fd is to be
                     // closed. More specifically No new data will be placed on

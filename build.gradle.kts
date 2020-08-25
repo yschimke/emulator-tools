@@ -1,5 +1,10 @@
-import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
+    }
+}
 
 plugins {
     kotlin("jvm") version "1.4.0"
@@ -7,9 +12,9 @@ plugins {
     `maven-publish`
     application
     id("net.nemerosa.versioning") version "2.14.0"
-    id("com.google.protobuf") version "0.8.12"
     id("com.diffplug.spotless") version "5.1.0"
     id("com.palantir.graal") version "0.7.1-15-g62b5090"
+    id("com.squareup.wire") version "3.3.0-alpha1"
 }
 
 repositories {
@@ -17,6 +22,7 @@ repositories {
     mavenCentral()
     maven(url = "https://jitpack.io")
     maven(url = "https://repo.maven.apache.org/maven2")
+    maven(url = "https://oss.sonatype.org/content/repositories/snapshots")
 }
 
 group = "com.github.yschimke"
@@ -35,22 +41,26 @@ application {
     mainClassName = "ee.schimke.emulatortools.MainKt"
 }
 
+wire {
+    proto3Preview = "UNSUPPORTED"
+    kotlin {
+        rpcCallStyle = "suspending"
+        rpcRole = "client"
+    }
+}
+
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("io.grpc:grpc-kotlin-stub:0.1.5")
 
     implementation("info.picocli:picocli:4.5.0")
     implementation("com.github.yschimke:oksocial-output:5.6")
     implementation("com.squareup.okio:okio:2.7.0")
     implementation("javax.annotation:javax.annotation-api:1.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
-    implementation("com.google.protobuf:protobuf-java:3.12.2")
-    implementation("com.google.protobuf:protobuf-java-util:3.12.2")
-    implementation("io.grpc:grpc-netty-shaded:1.30.0")
-    implementation("io.grpc:grpc-protobuf:1.30.0")
-    implementation("io.grpc:grpc-stub:1.30.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
+
+    api("com.squareup.wire:wire-runtime:3.3.0-alpha1")
+    api("com.squareup.wire:wire-grpc-client:3.3.0-alpha1")
 
     kapt("info.picocli:picocli-codegen:4.5.0")
     compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
@@ -61,37 +71,6 @@ dependencies {
         exclude(group= "org.graalvm.compiler")
     }
     implementation("io.github.classgraph:classgraph:4.8.87")
-}
-
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.12.2" }
-    plugins {
-        id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.30.0"
-        }
-        id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.5"
-        }
-    }
-    generateProtoTasks {
-        ofSourceSet("main").forEach {
-            it.plugins {
-                id("grpc")
-                id("grpckt")
-            }
-            it.generateDescriptorSet = true
-        }
-    }
-}
-
-sourceSets {
-    main {
-        java {
-            srcDirs("build/generated/source/proto/main/java")
-            srcDirs("build/generated/source/proto/main/grpc")
-            srcDirs("build/generated/source/proto/main/grpckt")
-        }
-    }
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
@@ -113,7 +92,7 @@ publishing {
 
 // https://github.com/square/okio/issues/647
 configurations.all {
-    if (name.contains("kapt") || name.contains("proto", ignoreCase = true)) {
+    if (name.contains("kapt") || name.contains("proto", ignoreCase = true) || name.contains("wire", ignoreCase = true)) {
         attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
     }
 }
@@ -128,5 +107,4 @@ graal {
     option("--no-fallback")
     option("--allow-incomplete-classpath")
     option("--report-unsupported-elements-at-runtime")
-    option("-Dio.netty.noUnsafe=true")
 }
