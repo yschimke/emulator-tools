@@ -8,12 +8,12 @@ buildscript {
 }
 
 plugins {
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.4.0"
     `maven-publish`
     application
-    id("com.github.ben-manes.versions") version "0.28.0"
-    id("net.nemerosa.versioning") version "2.8.2"
+    id("net.nemerosa.versioning") version "2.14.0"
     id("com.google.protobuf") version "0.8.12"
+    id("com.diffplug.spotless") version "5.1.0"
 }
 
 repositories {
@@ -34,8 +34,6 @@ java {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
-    kotlinOptions.apiVersion = "1.3"
-    kotlinOptions.languageVersion = "1.3"
 }
 
 application {
@@ -44,30 +42,30 @@ application {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("io.grpc:grpc-kotlin-stub:0.1.1")
+    implementation("io.grpc:grpc-kotlin-stub:0.1.5")
 
-    implementation("info.picocli:picocli:4.2.0")
-    implementation("com.github.yschimke:oksocial-output:5.1")
-    implementation("com.squareup.okio:okio:2.5.0")
+    implementation("info.picocli:picocli:4.5.0")
+    implementation("com.github.yschimke:oksocial-output:5.6")
+    implementation("com.squareup.okio:okio:2.7.0")
     implementation("javax.annotation:javax.annotation-api:1.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5")
-    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.11")
-    implementation("com.google.protobuf:protobuf-java:3.11.1")
-    implementation("com.google.protobuf:protobuf-java-util:3.11.1")
-    implementation("io.grpc:grpc-netty-shaded:1.26.0")
-    implementation("io.grpc:grpc-protobuf:1.26.0")
-    implementation("io.grpc:grpc-stub:1.26.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
+    implementation("com.google.protobuf:protobuf-java:3.12.2")
+    implementation("com.google.protobuf:protobuf-java-util:3.12.2")
+    implementation("io.grpc:grpc-netty-shaded:1.30.0")
+    implementation("io.grpc:grpc-protobuf:1.30.0")
+    implementation("io.grpc:grpc-stub:1.30.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
 }
 
 protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.11.4" }
+    protoc { artifact = "com.google.protobuf:protoc:3.12.2" }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.28.1"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.30.0"
         }
         id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.1"
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.5"
         }
     }
     generateProtoTasks {

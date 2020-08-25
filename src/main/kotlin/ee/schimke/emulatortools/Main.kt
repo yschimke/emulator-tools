@@ -31,9 +31,9 @@ class Main : Runnable, Closeable {
     var screenshot: Boolean = false
 
     @CommandLine.Option(names = ["--port"], hidden = true)
-    var port: Int = 8554
+    var port: Int = 5556
 
-    val console = ConsoleHandler.instance(object: ResponseExtractor<ContentAndType> {
+    val console = ConsoleHandler.instance(object : ResponseExtractor<ContentAndType> {
         override fun filename(response: ContentAndType): String? = null
 
         override fun mimeType(response: ContentAndType): String? = response.mimetype
@@ -77,7 +77,8 @@ class Main : Runnable, Closeable {
     }
 
     suspend fun showBattery() {
-        println(client.getBattery(Empty.getDefaultInstance()))
+        val batteryStatus = client.getBattery(Empty.getDefaultInstance())
+        println(batteryStatus)
     }
 
     suspend fun screenshot() {
