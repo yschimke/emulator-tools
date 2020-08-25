@@ -31,16 +31,16 @@ class Main : Runnable, Closeable {
     var screenshot: Boolean = false
 
     @CommandLine.Option(names = ["--port"], hidden = true)
-    var port: Int = 5556
+    var port: Int = 8554
 
     val console = ConsoleHandler.instance(object : ResponseExtractor<ContentAndType> {
-        override fun filename(response: ContentAndType): String? = null
+      override fun filename(response: ContentAndType): String? = null
 
-        override fun mimeType(response: ContentAndType): String? = response.mimetype
+      override fun mimeType(response: ContentAndType): String? = response.mimetype
 
-        override fun source(response: ContentAndType): okio.BufferedSource {
-            return Buffer().write(response.content)
-        }
+      override fun source(response: ContentAndType): okio.BufferedSource {
+        return Buffer().write(response.content)
+      }
     })
 
     val channel = lazy { ManagedChannelBuilder.forTarget("localhost:$port").usePlaintext().build() }
@@ -77,7 +77,7 @@ class Main : Runnable, Closeable {
     }
 
     suspend fun showBattery() {
-        val batteryStatus = client.getBattery(Empty.getDefaultInstance())
+        val batteryStatus = client.getBattery(Empty.getDefaultInstance()  )
         println(batteryStatus)
     }
 
@@ -94,6 +94,12 @@ class Main : Runnable, Closeable {
             channel.value.shutdown().awaitTermination(5, TimeUnit.SECONDS)
         }
     }
+
+  companion object {
+    init {
+      System.setProperty("io.netty.noUnsafe", "true")
+    }
+  }
 }
 
 data class ContentAndType(val content: ByteString, val filename: String? = null, val mimetype: String? = null)

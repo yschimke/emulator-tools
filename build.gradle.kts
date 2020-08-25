@@ -1,19 +1,15 @@
 import com.google.protobuf.gradle.*
 import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-}
-
 plugins {
     kotlin("jvm") version "1.4.0"
+    kotlin("kapt") version "1.4.0"
     `maven-publish`
     application
     id("net.nemerosa.versioning") version "2.14.0"
     id("com.google.protobuf") version "0.8.12"
     id("com.diffplug.spotless") version "5.1.0"
+    id("com.palantir.graal") version "0.7.1-15-g62b5090"
 }
 
 repositories {
@@ -21,7 +17,6 @@ repositories {
     mavenCentral()
     maven(url = "https://jitpack.io")
     maven(url = "https://repo.maven.apache.org/maven2")
-    maven(url = "https://dl.bintray.com/kotlin/kotlin-eap/")
 }
 
 group = "com.github.yschimke"
@@ -56,6 +51,15 @@ dependencies {
     implementation("io.grpc:grpc-protobuf:1.30.0")
     implementation("io.grpc:grpc-stub:1.30.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
+
+    kapt("info.picocli:picocli-codegen:4.5.0")
+    compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
+        // https://youtrack.jetbrains.com/issue/KT-29513
+        exclude(group= "org.graalvm.nativeimage")
+        exclude(group= "org.graalvm.truffle")
+        exclude(group= "org.graalvm.sdk")
+        exclude(group= "org.graalvm.compiler")
+    }
 }
 
 protobuf {
@@ -111,4 +115,17 @@ configurations.all {
     if (name.contains("kapt") || name.contains("proto", ignoreCase = true)) {
         attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
     }
+}
+
+graal {
+    mainClass("ee.schimke.emulatortools.MainKt")
+    outputName("emulator-tools")
+    graalVersion("20.2.0")
+    javaVersion("11")
+
+    option("--enable-https")
+    option("--no-fallback")
+    option("--allow-incomplete-classpath")
+    option("--report-unsupported-elements-at-runtime")
+    option("-Dio.netty.noUnsafe=true")
 }

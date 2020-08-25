@@ -21,9 +21,7 @@ $ emulator -no-window @pixel5 -grpc 8554
 # Running from checkout
 
 ```
-$ ./gradlew installDist
-
-$ ./build/install/emulator-tools/bin/emulator-tools --screenshot
+$ ./emulator-tools --screenshot
 ```
 
 ![image](https://user-images.githubusercontent.com/231923/79718336-b84d3780-82d3-11ea-9f40-4f48b0ccc8bf.png)
