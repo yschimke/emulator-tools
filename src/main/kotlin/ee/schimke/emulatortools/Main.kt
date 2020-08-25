@@ -97,7 +97,8 @@ class Main : Runnable, Closeable {
 
   companion object {
     init {
-      System.setProperty("io.netty.noUnsafe", "true")
+      System.setProperty("io.grpc.netty.shaded.io.netty.noUnsafe", "true")
+      System.setProperty("io.grpc.netty.shaded.io.netty.allocator.type", "unpooled")
     }
   }
 }

@@ -57,9 +57,10 @@ dependencies {
         // https://youtrack.jetbrains.com/issue/KT-29513
         exclude(group= "org.graalvm.nativeimage")
         exclude(group= "org.graalvm.truffle")
-        exclude(group= "org.graalvm.sdk")
+//        exclude(group= "org.graalvm.sdk")
         exclude(group= "org.graalvm.compiler")
     }
+    implementation("io.github.classgraph:classgraph:4.8.87")
 }
 
 protobuf {
