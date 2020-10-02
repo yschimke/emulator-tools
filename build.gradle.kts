@@ -1,4 +1,3 @@
-import com.google.protobuf.gradle.*
 import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 plugins {
@@ -7,9 +6,9 @@ plugins {
     `maven-publish`
     application
     id("net.nemerosa.versioning") version "2.14.0"
-    id("com.google.protobuf") version "0.8.12"
     id("com.diffplug.spotless") version "5.1.0"
-    id("com.palantir.graal") version "0.7.1-15-g62b5090"
+    id("com.squareup.wire") version "3.3.0"
+    id("com.palantir.graal") version "0.7.1"
 }
 
 repositories {
@@ -29,6 +28,8 @@ java {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.allWarningsAsErrors = false
+    kotlinOptions.freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable", "-Xopt-in=kotlin.RequiresOptIn")
 }
 
 application {
@@ -44,13 +45,13 @@ dependencies {
     implementation("com.squareup.okio:okio:2.7.0")
     implementation("javax.annotation:javax.annotation-api:1.3.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
-    implementation("com.google.protobuf:protobuf-java:3.12.2")
-    implementation("com.google.protobuf:protobuf-java-util:3.12.2")
-    implementation("io.grpc:grpc-netty-shaded:1.30.0")
-    implementation("io.grpc:grpc-protobuf:1.30.0")
-    implementation("io.grpc:grpc-stub:1.30.0")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
+
+    implementation("com.squareup.wire:wire-runtime:3.4.0")
+    implementation("com.squareup.wire:wire-moshi-adapter:3.4.0")
+    implementation("com.squareup.wire:wire-grpc-client:3.4.0") {
+        exclude(group= "com.squareup.okhttp3")
+    }
 
     kapt("info.picocli:picocli-codegen:4.5.0")
     compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
@@ -61,27 +62,6 @@ dependencies {
         exclude(group= "org.graalvm.compiler")
     }
     implementation("io.github.classgraph:classgraph:4.8.87")
-}
-
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.12.2" }
-    plugins {
-        id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.30.0"
-        }
-        id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.5"
-        }
-    }
-    generateProtoTasks {
-        ofSourceSet("main").forEach {
-            it.plugins {
-                id("grpc")
-                id("grpckt")
-            }
-            it.generateDescriptorSet = true
-        }
-    }
 }
 
 sourceSets {
@@ -118,6 +98,13 @@ configurations.all {
     }
 }
 
+wire {
+    kotlin {
+        out = "src/main/kotlin"
+        javaInterop = true
+    }
+}
+
 graal {
     mainClass("ee.schimke.emulatortools.MainKt")
     outputName("emulator-tools")
@@ -127,6 +114,4 @@ graal {
     option("--enable-https")
     option("--no-fallback")
     option("--allow-incomplete-classpath")
-    option("--report-unsupported-elements-at-runtime")
-    option("-Dio.netty.noUnsafe=true")
 }
