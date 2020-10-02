@@ -213,7 +213,7 @@ class SocketControl(
      * message is sent.
      * Request the client to open up a connection with the
      */
-    openn(1),
+    open(1),
 
     /**
      * requested id.
@@ -234,7 +234,7 @@ class SocketControl(
       @JvmStatic
       fun fromValue(value: Int): Sort? = when (value) {
         0 -> identity
-        1 -> openn
+        1 -> open
         2 -> close
         else -> null
       }
