@@ -164,17 +164,17 @@ jreleaser {
             active.set(org.jreleaser.model.Active.RELEASE)
             repoTap {
                 owner.set("yschimke")
-                formulaName.set("emulatortools")
+                formulaName.set("emulator-tools")
             }
         }
     }
 
-    this.distributions.create("emulatortools") {
+    this.distributions.create("emulator-tools") {
         active.set(org.jreleaser.model.Active.RELEASE)
         distributionType.set(org.jreleaser.model.Distribution.DistributionType.NATIVE_IMAGE)
         artifact {
             platform.set("osx")
-            path.set(file("build/distributions/emulatortools-graal-$version.zip"))
+            path.set(file("build/distributions/emulator-tools-graal-$version.zip"))
         }
     }
 }
