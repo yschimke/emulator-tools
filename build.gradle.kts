@@ -2,14 +2,14 @@ import com.google.protobuf.gradle.*
 import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
 
 plugins {
-    kotlin("jvm") version "1.4.0"
-    kotlin("kapt") version "1.4.0"
+    kotlin("jvm") version "1.6.10"
+    kotlin("kapt") version "1.6.10"
     `maven-publish`
     application
-    id("net.nemerosa.versioning") version "2.14.0"
-    id("com.google.protobuf") version "0.8.12"
+    id("net.nemerosa.versioning") version "2.15.1"
+    id("com.google.protobuf") version "0.8.18"
     id("com.diffplug.spotless") version "5.1.0"
-    id("com.palantir.graal") version "0.7.1-15-g62b5090"
+    id("com.palantir.graal") version "0.10.0"
 }
 
 repositories {
@@ -37,40 +37,34 @@ application {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
-    implementation("io.grpc:grpc-kotlin-stub:0.1.5")
+    implementation("io.grpc:grpc-kotlin-stub:1.2.0")
 
-    implementation("info.picocli:picocli:4.5.0")
+    implementation("info.picocli:picocli:4.6.2")
     implementation("com.github.yschimke:oksocial-output:5.6")
-    implementation("com.squareup.okio:okio:2.7.0")
-    implementation("javax.annotation:javax.annotation-api:1.3.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
-    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.12")
-    implementation("com.google.protobuf:protobuf-java:3.12.2")
-    implementation("com.google.protobuf:protobuf-java-util:3.12.2")
-    implementation("io.grpc:grpc-netty-shaded:1.30.0")
-    implementation("io.grpc:grpc-protobuf:1.30.0")
-    implementation("io.grpc:grpc-stub:1.30.0")
+    implementation("com.squareup.okio:okio:3.0.0")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.18")
+    implementation("com.google.protobuf:protobuf-java:3.19.1")
+    implementation("com.google.protobuf:protobuf-java-util:3.19.1")
+    implementation("io.grpc:grpc-netty-shaded:1.42.1")
+    implementation("io.grpc:grpc-protobuf:1.42.1")
+    implementation("io.grpc:grpc-stub:1.42.1")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
 
-    kapt("info.picocli:picocli-codegen:4.5.0")
-    compileOnly("org.graalvm.nativeimage:svm:20.2.0") {
-        // https://youtrack.jetbrains.com/issue/KT-29513
-        exclude(group= "org.graalvm.nativeimage")
-        exclude(group= "org.graalvm.truffle")
-//        exclude(group= "org.graalvm.sdk")
-        exclude(group= "org.graalvm.compiler")
-    }
-    implementation("io.github.classgraph:classgraph:4.8.87")
+    kapt("info.picocli:picocli-codegen:4.6.2")
+    compileOnly("org.graalvm.nativeimage:svm:21.2.0")
+    implementation("io.github.classgraph:classgraph:4.8.138")
 }
 
 protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.12.2" }
+    protoc { artifact = "com.google.protobuf:protoc:3.19.1" }
     plugins {
         id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.30.0"
+            artifact = "io.grpc:protoc-gen-grpc-java:1.43.1"
         }
         id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:0.1.5"
+            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.2.0:jdk7@jar"
         }
     }
     generateProtoTasks {
@@ -95,7 +89,7 @@ sourceSets {
 }
 
 val sourcesJar by tasks.registering(Jar::class) {
-    classifier = "sources"
+    archiveClassifier.set("sources")
     from(sourceSets.main.get().allSource)
 }
 
@@ -121,12 +115,11 @@ configurations.all {
 graal {
     mainClass("ee.schimke.emulatortools.MainKt")
     outputName("emulator-tools")
-    graalVersion("20.2.0")
+    graalVersion("21.3.0")
     javaVersion("11")
 
     option("--enable-https")
     option("--no-fallback")
     option("--allow-incomplete-classpath")
     option("--report-unsupported-elements-at-runtime")
-    option("-Dio.netty.noUnsafe=true")
 }
