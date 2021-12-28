@@ -1,3 +1,6 @@
+import net.nemerosa.versioning.ReleaseInfo
+import net.nemerosa.versioning.VersionInfo
+
 plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("kapt") version "1.6.10"
@@ -7,17 +10,37 @@ plugins {
     id("com.diffplug.spotless") version "5.1.0"
     id("com.palantir.graal") version "0.10.0"
     id("com.squareup.wire") version "4.0.1"
+    id("org.jreleaser") version "0.9.1"
+}
+
+versioning {
+    scm = "git"
+    releaseParser = KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, ReleaseInfo>({ scmInfo, _ ->
+        if (scmInfo.tag != null && scmInfo.tag.startsWith("v")) {
+            ReleaseInfo("release", scmInfo.tag.substring(1))
+        } else {
+            val parts = scmInfo.branch.split("/", limit = 2)
+            ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
+        }
+    })
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 repositories {
-    jcenter()
     mavenCentral()
-    maven(url = "https://jitpack.io")
-    maven(url = "https://repo.maven.apache.org/maven2")
+    maven {
+        url = uri("https://jitpack.io")
+        content {
+            includeGroup("com.github.yschimke")
+        }
+    }
 }
 
 group = "com.github.yschimke"
-version = versioning.info.display
+version = versioning.info.effectiveVersion()
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -29,7 +52,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 }
 
 application {
-    mainClassName = "ee.schimke.emulatortools.MainKt"
+    mainClass.set("ee.schimke.emulatortools.MainKt")
 }
 
 dependencies {
@@ -80,13 +103,6 @@ publishing {
     }
 }
 
-// https://github.com/square/okio/issues/647
-configurations.all {
-    if (name.contains("kapt") || name.contains("proto", ignoreCase = true)) {
-        attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, Usage.JAVA_RUNTIME))
-    }
-}
-
 graal {
     mainClass("ee.schimke.emulatortools.MainKt")
     outputName("emulator-tools")
@@ -97,4 +113,114 @@ graal {
     option("--no-fallback")
     option("--allow-incomplete-classpath")
     option("--report-unsupported-elements-at-runtime")
+}
+
+val nativeImage = tasks["nativeImage"]
+val isJitpack = rootProject.booleanEnv("JITPACK")
+
+if (!isJitpack) {
+    distributions {
+        create("graal") {
+            contents {
+                from("${rootProject.projectDir}") {
+                    include("README.md", "LICENSE")
+                }
+                from("${rootProject.projectDir}/zsh") {
+                    into("zsh")
+                }
+                into("bin") {
+                    from(nativeImage)
+                }
+            }
+        }
+    }
+}
+
+jreleaser {
+    dryrun.set(rootProject.booleanProperty("jreleaser.dryrun"))
+
+    project {
+        website.set("https://github.com/yschimke/emulator-tools")
+        description.set("Android Emulator Tools")
+        authors.set(listOf("yschimke"))
+        license.set("Apache-2.0")
+        copyright.set("Yuri Schimke")
+    }
+
+    release {
+        github {
+            owner.set("yschimke")
+            overwrite.set(true)
+            skipTag.set(true)
+        }
+    }
+
+    assemble {
+        enabled.set(true)
+    }
+
+    packagers {
+        brew {
+            active.set(org.jreleaser.model.Active.RELEASE)
+            repoTap {
+                owner.set("yschimke")
+                formulaName.set("emulatortools")
+            }
+        }
+    }
+
+    this.distributions.create("emulatortools") {
+        active.set(org.jreleaser.model.Active.RELEASE)
+        distributionType.set(org.jreleaser.model.Distribution.DistributionType.NATIVE_IMAGE)
+        artifact {
+            platform.set("osx")
+            path.set(file("build/distributions/emulatortools-graal-$version.zip"))
+        }
+    }
+}
+
+fun Project.booleanProperty(name: String) = this.findProperty(name).toString().toBoolean()
+
+fun Project.booleanEnv(name: String) = (System.getenv(name) as String?).toString().toBoolean()
+
+task("tagRelease") {
+    doLast {
+        val tagName = versioning.info.nextVersion() ?: throw IllegalStateException("unable to compute tag name")
+        exec {
+            commandLine("git", "tag", tagName)
+        }
+        exec {
+            commandLine("git", "push", "origin", "refs/tags/$tagName")
+        }
+    }
+}
+
+fun VersionInfo.nextVersion() = when {
+    this.tag == null && this.branch == "main" -> {
+        val matchResult = Regex("v(\\d+)\\.(\\d+)(?:.\\d+)").matchEntire(this.lastTag ?: "")
+        if (matchResult != null) {
+            val (_, major, minor) = matchResult.groupValues
+            "v$major.${minor.toInt() + 1}"
+        } else {
+            null
+        }
+    }
+    else -> {
+        null
+    }
+}
+
+fun VersionInfo.effectiveVersion() = when {
+    this.tag == null && this.branch == "main" -> {
+        val matchResult = Regex("v(\\d+)\\.(\\d+)").matchEntire(this.lastTag ?: "")
+        if (matchResult != null) {
+            val (_, major, minor) = matchResult.groupValues
+            "$major.${minor.toInt() + 1}.0-SNAPSHOT"
+        } else {
+            "0.0.1-SNAPSHOT"
+        }
+    }
+    else -> {
+        this.display
+    }
 }
