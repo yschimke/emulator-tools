@@ -1,7 +1,7 @@
 package ee.schimke.emulatortools.graal
 
-import com.google.protobuf.GeneratedMessageV3
 import com.oracle.svm.core.annotate.AutomaticFeature
+import com.squareup.wire.Service
 import io.github.classgraph.ClassGraph
 import org.graalvm.nativeimage.hosted.Feature
 import org.graalvm.nativeimage.hosted.Feature.BeforeAnalysisAccess
@@ -11,14 +11,12 @@ import org.graalvm.nativeimage.hosted.RuntimeReflection
 internal class RuntimeReflectionRegistrationFeature : Feature {
   override fun beforeAnalysis(access: BeforeAnalysisAccess) {
     try {
-      val pkg = "com.baulsupp.cooee.cli"
       ClassGraph()
-//      .verbose() // Log to stderr
-        .enableClassInfo() // Scan classes, methods, fields, annotations
-        .acceptPackages(pkg) // Scan com.xyz and subpackages (omit to scan all packages)
+        .enableClassInfo()
+        .acceptPackages("com")
         .scan()
-        .use { scanResult ->                    // Start the scan
-          for (classInfo in scanResult.getSubclasses(GeneratedMessageV3::class.java.name)) {
+        .use { scanResult ->
+          for (classInfo in scanResult.getClassesImplementing(Service::class.java.name)) {
             registerGrpcAdapter(classInfo.loadClass())
           }
         }

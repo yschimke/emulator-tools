@@ -1,15 +1,12 @@
-import com.google.protobuf.gradle.*
-import org.gradle.kotlin.dsl.provider.gradleKotlinDslOf
-
 plugins {
     kotlin("jvm") version "1.6.10"
     kotlin("kapt") version "1.6.10"
     `maven-publish`
     application
     id("net.nemerosa.versioning") version "2.15.1"
-    id("com.google.protobuf") version "0.8.18"
     id("com.diffplug.spotless") version "5.1.0"
     id("com.palantir.graal") version "0.10.0"
+    id("com.squareup.wire") version "4.0.1"
 }
 
 repositories {
@@ -44,47 +41,25 @@ dependencies {
     implementation("com.squareup.okio:okio:3.0.0")
     implementation("javax.annotation:javax.annotation-api:1.3.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("com.google.protobuf:protobuf-gradle-plugin:0.8.18")
-    implementation("com.google.protobuf:protobuf-java:3.19.1")
-    implementation("com.google.protobuf:protobuf-java-util:3.19.1")
-    implementation("io.grpc:grpc-netty-shaded:1.42.1")
-    implementation("io.grpc:grpc-protobuf:1.42.1")
-    implementation("io.grpc:grpc-stub:1.42.1")
     implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
 
     kapt("info.picocli:picocli-codegen:4.6.2")
     compileOnly("org.graalvm.nativeimage:svm:21.2.0")
     implementation("io.github.classgraph:classgraph:4.8.138")
+
+    api("com.squareup.wire:wire-runtime:4.0.1")
+    api("com.squareup.wire:wire-grpc-client:4.0.1")
 }
 
-protobuf {
-    protoc { artifact = "com.google.protobuf:protoc:3.19.1" }
-    plugins {
-        id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.43.1"
-        }
-        id("grpckt") {
-            artifact = "io.grpc:protoc-gen-grpc-kotlin:1.2.0:jdk7@jar"
-        }
+wire {
+    sourcePath {
+        srcDir("src/main/proto")
+        include("**")
     }
-    generateProtoTasks {
-        ofSourceSet("main").forEach {
-            it.plugins {
-                id("grpc")
-                id("grpckt")
-            }
-            it.generateDescriptorSet = true
-        }
-    }
-}
 
-sourceSets {
-    main {
-        java {
-            srcDirs("build/generated/source/proto/main/java")
-            srcDirs("build/generated/source/proto/main/grpc")
-            srcDirs("build/generated/source/proto/main/grpckt")
-        }
+    kotlin {
+        rpcRole = "client"
+        rpcCallStyle = "suspending"
     }
 }
 
