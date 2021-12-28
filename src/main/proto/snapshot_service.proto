@@ -54,13 +54,13 @@ option objc_class_prefix = "AEC";
 // For example do not expect to be able to restore a snapshot on created on an
 // Intel cpu on an AMD cpu.
 service SnapshotService {
-  // Lists all the valid snapshots that are stored locally for the currently
-  // running avd. This includes all the snapshots that were imported (pushed)
-  // into this emulator.
+  // Lists all the snapshots, filtered by the given query, that are stored
+  // locally for the currently running avd. This includes all the snapshots that
+  // were imported (pushed) into this emulator.
   //
   // Returns a list of snapshot_id's and associated details that describes
   // the hardware configuration, logical name, etc of the snapshot.
-  rpc ListSnapshots(google.protobuf.Empty) returns (SnapshotList) {}
+  rpc ListSnapshots(SnapshotFilter) returns (SnapshotList) {}
 
   // Pulls down the snapshot stored inside the AVD as a tar.gz/tar stream
   // This will normalize the snapshot, all relevant data to push a snapshot
@@ -73,6 +73,12 @@ service SnapshotService {
   // Note that pulling .gz stream is slow.
   //
   // You must provide the snapshot_id and (desired) format.
+  //
+  // If SnapshotPackage.path is set, the gRPC service will directly write the
+  // exported snapshot to SnapshotPackage.path without streaming, which is
+  // usually significantly faster. It would require emulator to have direct
+  // access to SnapshotPackage.path, which usually means it can only be used
+  // when pulling from a local emulator.
   rpc PullSnapshot(SnapshotPackage) returns (stream SnapshotPackage) {}
 
   // Push a tar.gz stream contain the snapshot. The tar file should
@@ -85,6 +91,12 @@ service SnapshotService {
   //
   // You must provide the snapshot_id and format in the first message.
   // Will return success and a possible error message when a failure occurs.
+  //
+  // If SnapshotPackage.path is set, the gRPC service will directly unzip the
+  // exported snapshot from SnapshotPackage.path without streaming, which is
+  // usually significantly faster. It would require emulator to have direct
+  // access to SnapshotPackage.path, which usually means it can only be used
+  // when pushing to a local emulator.
   rpc PushSnapshot(stream SnapshotPackage) returns (SnapshotPackage) {}
 
   // Loads the given snapshot inside the emulator and activates it.
@@ -126,27 +138,89 @@ service SnapshotService {
   rpc TrackProcess(IceboxTarget) returns (IceboxTarget) {}
 }
 
+// Sets options for SnapshotService. Used for both request and response messages.
 message SnapshotPackage {
   enum Format {
     TARGZ = 0;
     TAR = 1;
   }
-  // The identifier to the snapshot, only required for the first message.
+  // The identifier to the snapshot, only required for request messages. For
+  // streaming service, only used in the first stream message of a gRPC call
+  // (would be ignored in consequent stream messages of the same call).
   string snapshot_id = 1;
 
   // A stream of bytes. Encoded as a tar (possibly gzipped) file pendinf on the
   // value of format.
   bytes payload = 2;
 
-  // [Output only] status fields, usually indicates end of transmission.
+  // [response only] status fields, usually indicates end of transmission.
   bool success = 3;
   bytes err = 4;
 
-  // Format of the payload. Only required for the first message.
+  // [request only] Format of the payload. Only used in request messages. For
+  // streaming service, only used in the first stream message of a gRPC call
+  // (would be ignored in consequent stream messages of the same call).
   Format format = 5;
+
+  // [request only] Path to the snapshot package file. Only used in request
+  // messages.
+  //
+  // When set in a request, the PullSnapshot/PushSnapshot operation will directly
+  // write/read the exported snapshot in path without streaming, which is usually
+  // significantly faster. It would require emulator to have direct access to
+  // path, which usually means it can only be used with a local emulator.
+  string path = 6;
 }
 
+// A snapshot filter can be used to filter the results produced by ListSnapshots
+message SnapshotFilter {
+  enum LoadStatus {
+    // Only return compatible snapshots
+    CompatibleOnly = 0;
+
+    // Return all snapshots.
+    All = 1;
+  }
+
+  // Filter snapshots by load status.
+  LoadStatus statusFilter = 1;
+}
+
+// Provides detailed information regarding the snapshot.
 message SnapshotDetails {
+
+  enum LoadStatus {
+    // The emulator believes that the snapshot is compatible with the emulator
+    // that provided this information.  The emulator will attempt to load this
+    // snapshot when requested.
+    //
+    // A snapshot is usually compatible when the following statements are true:
+    // - The snapshot was taken by the current emulator version. i.e.
+    //   emulator_build_id in the details field matches the build_id of the
+    //   emulator that provided this information.
+    //
+    // - The snapshot was taken on the current running machine, and no hardware
+    //  changes have taken place between taking and loading the snapshot.
+    //
+    // - The avd configuration has not changed between when this snapshot was
+    //   taken  and when the snapshot was loaded.
+    //
+    // - The system images on which the avd is based have not changed.
+    Compatible = 0;
+
+    // The emulator will not allow loading of the snapshot, as it deems the
+    // snapshot to be incompatible. Loading of snapshots can be forced by
+    // launching the emulator with the feature "AllowSnapshotMigration" enabled.
+    Incompatible = 1;
+
+    // This snapshot was successfully loaded in the emulator, and was used at
+    // the starting point of the current running emulator. The following holds:
+    //
+    // A loaded snapshot is a compatible snapshot
+    // There is at most one snapshot_id that is in the "Loaded" state
+    Loaded = 2;
+  }
+
   // The id of this snapshot. Use this id to load/delete/pull the
   // snapshot.
   string snapshot_id = 1;
@@ -157,6 +231,12 @@ message SnapshotDetails {
   // Look at the import file for a detailed description of the available
   // fields.
   emulator_snapshot.Snapshot details = 2;
+
+  // Provides information about the ability to restore this snapshot.
+  LoadStatus status = 3;
+
+  // The size of the folder that stores required information to load a snapshot.
+  uint64 size = 4;
 }
 
 // A List of on snapshot details.
@@ -182,8 +262,11 @@ message IceboxTarget {
 
   // [Output Only] Detailed error message that might provide more information.
   string err = 5;
-}
 
+  // Maximum number of snapshots the emulator can take during one Icebox run.
+  // Set to -1 for unlimited number of snapshots.
+  int32 max_snapshot_number = 6;
+}
 
 // List of deleted methods:
 //
