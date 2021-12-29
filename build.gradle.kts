@@ -177,12 +177,6 @@ publishing {
     }
 }
 
-//distributions {
-//    main {
-//        this.distributionBaseName
-//    }
-//}
-
 jreleaser {
     dryrun.set(rootProject.booleanProperty("jreleaser.dryrun"))
 
