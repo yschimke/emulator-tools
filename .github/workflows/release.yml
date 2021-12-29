@@ -23,7 +23,7 @@ jobs:
           distribution: 'zulu'
 
       - name: Build Native Image
-        run: ./gradlew assembleGraalDist
+        run: ./gradlew jar installDist
 
       - name: JReleaser Config
         run: ./gradlew jreleaserConfig
