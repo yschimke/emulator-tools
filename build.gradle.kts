@@ -210,7 +210,7 @@ jreleaser {
                 addArg("--report-unsupported-elements-at-runtime")
 
                 graal {
-                    path.set(File("/Library/Java/JavaVirtualMachines/graalvm-ce-java17-21.3.0/Contents/Home"))
+                    path.set(File("graalvm"))
                 }
 
                 mainJar {
@@ -229,15 +229,6 @@ jreleaser {
                     pattern.set("README.md")
                 }
             }
-        }
-    }
-
-    this.distributions.create("emulator-tools") {
-        active.set(org.jreleaser.model.Active.RELEASE)
-        distributionType.set(org.jreleaser.model.Distribution.DistributionType.NATIVE_IMAGE)
-        artifact {
-            platform.set("osx")
-            path.set(file("build/distributions/emulator-tools-graal-$version.zip"))
         }
     }
 
