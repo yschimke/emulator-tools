@@ -1,33 +1,15 @@
-import net.nemerosa.versioning.ReleaseInfo
-import net.nemerosa.versioning.VersionInfo
-
 plugins {
-    kotlin("jvm") version "1.6.10"
+    kotlin("multiplatform") version "1.6.10"
     kotlin("kapt") version "1.6.10"
-    `maven-publish`
-    application
-    id("net.nemerosa.versioning") version "2.15.1"
-    id("com.diffplug.spotless") version "5.1.0"
-    id("com.palantir.graal") version "0.10.0"
+    id("maven-publish")
+    id("net.nemerosa.versioning") version "2.15.0"
     id("com.squareup.wire") version "4.0.1"
-    id("org.jreleaser") version "0.9.1"
+    id("org.jreleaser") version "0.10.0"
+    application
 }
 
-versioning {
-    scm = "git"
-    releaseParser = KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, ReleaseInfo>({ scmInfo, _ ->
-        if (scmInfo.tag != null && scmInfo.tag.startsWith("v")) {
-            ReleaseInfo("release", scmInfo.tag.substring(1))
-        } else {
-            val parts = scmInfo.branch.split("/", limit = 2)
-            ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
-        }
-    })
-}
-
-tasks.test {
-    useJUnitPlatform()
-}
+group = "com.github.yschimke"
+version = versioning.info.effectiveVersion()
 
 repositories {
     mavenCentral()
@@ -35,52 +17,25 @@ repositories {
         url = uri("https://jitpack.io")
         content {
             includeGroup("com.github.yschimke")
+            includeGroup("com.github.yschimke.schoutput")
         }
     }
 }
 
-group = "com.github.yschimke"
-version = versioning.info.effectiveVersion()
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+tasks.withType(Jar::class) {
+    manifest {
+        attributes["Manifest-Version"] = "1.0"
+        attributes["Main-Class"] = "ee.schimke.emulatortools.MainKt"
+    }
 }
 
 application {
     mainClass.set("ee.schimke.emulatortools.MainKt")
 }
 
-dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    implementation("io.grpc:grpc-kotlin-stub:1.2.0")
-
-    implementation("info.picocli:picocli:4.6.2")
-    implementation("com.github.yschimke:oksocial-output:5.6")
-    implementation("com.squareup.okio:okio:3.0.0")
-    implementation("javax.annotation:javax.annotation-api:1.3.2")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-    implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
-
-    kapt("info.picocli:picocli-codegen:4.6.2")
-    compileOnly("org.graalvm.nativeimage:svm:21.2.0")
-    implementation("io.github.classgraph:classgraph:4.8.138")
-
-    api("com.squareup.wire:wire-runtime:4.0.1")
-    api("com.squareup.wire:wire-grpc-client:4.0.1")
-
-    implementation("org.apache.commons:commons-imaging:1.0-alpha2")
-    implementation("net.imagej:ij:1.53h")
-    implementation("org.openimaj:core-image:1.3.10")
-}
-
 wire {
     sourcePath {
-        srcDir("src/main/proto")
+        srcDir("src/commonMain/proto")
         include("**")
     }
 
@@ -90,55 +45,123 @@ wire {
     }
 }
 
-val sourcesJar by tasks.registering(Jar::class) {
-    archiveClassifier.set("sources")
-    from(sourceSets.main.get().allSource)
-}
-
-publishing {
-    repositories {
-        maven(url = "build/repository")
-    }
-    publications {
-        register("mavenJava", MavenPublication::class) {
-            from(components["java"])
-            artifact(sourcesJar.get())
+kotlin {
+    jvm {
+        compilations.all {
+            kotlinOptions.jvmTarget = "1.8"
+        }
+        withJava()
+        testRuns["test"].executionTask.configure {
+            useJUnitPlatform()
         }
     }
-}
-
-graal {
-    mainClass("ee.schimke.emulatortools.MainKt")
-    outputName("emulator-tools")
-    graalVersion("21.3.0")
-    javaVersion("11")
-
-    option("--enable-https")
-    option("--no-fallback")
-    option("--allow-incomplete-classpath")
-    option("--report-unsupported-elements-at-runtime")
-}
-
-val nativeImage = tasks["nativeImage"]
-val isJitpack = rootProject.booleanEnv("JITPACK")
-
-if (!isJitpack) {
-    distributions {
-        create("graal") {
-            contents {
-                from("${rootProject.projectDir}") {
-                    include("README.md", "LICENSE")
+    js {
+        compilations.all {
+            kotlinOptions {
+                moduleKind = "umd"
+                sourceMap = true
+                metaInfo = true
+            }
+        }
+        nodejs {
+            testTask {
+                useMocha {
+                    timeout = "30s"
                 }
-                from("${rootProject.projectDir}/zsh") {
-                    into("zsh")
-                }
-                into("bin") {
-                    from(nativeImage)
-                }
+            }
+        }
+        browser {
+        }
+    }
+
+    sourceSets {
+        val commonMain by getting {
+            dependencies {
+                api("com.squareup.okio:okio:3.0.0")
+                api("com.github.yschimke.schoutput:schoutput:0.9.2")
+                api("com.squareup.wire:wire-grpc-client:4.0.1")
+            }
+        }
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation("com.squareup.okio:okio:3.0.0")
+            }
+        }
+        val jvmMain by getting {
+            dependencies {
+                dependsOn(commonMain)
+
+                implementation(kotlin("stdlib-jdk8"))
+                implementation("io.grpc:grpc-kotlin-stub:1.2.0")
+                implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+
+                implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
+
+                implementation("info.picocli:picocli:4.6.2")
+                implementation("com.squareup.okio:okio:3.0.0")
+                implementation("javax.annotation:javax.annotation-api:1.3.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
+                implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
+
+                configurations["kapt"].dependencies.add(project.dependencies.create("info.picocli:picocli-codegen:4.6.2"))
+                compileOnly("org.graalvm.nativeimage:svm:21.2.0")
+                implementation("io.github.classgraph:classgraph:4.8.138")
+
+                api("com.squareup.wire:wire-runtime:4.0.1")
+                api("com.squareup.wire:wire-grpc-client:4.0.1")
+            }
+        }
+        val jvmTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation("com.squareup.okio:okio:3.0.0")
+            }
+        }
+        val nonJvmMain by creating {
+            dependencies {
+                dependsOn(commonMain)
+            }
+        }
+        val nonJvmTest by creating {
+            dependencies {
+                dependsOn(commonTest)
+            }
+        }
+        val jsMain by getting {
+            dependsOn(nonJvmMain)
+            dependencies {
+            }
+        }
+        val jsTest by getting {
+            dependencies {
+                dependsOn(nonJvmTest)
+                implementation(kotlin("test"))
             }
         }
     }
 }
+
+publishing {
+    publications {
+        withType<MavenPublication> {
+            tasks.withType<AbstractPublishToMaven>()
+                .matching { it.publication == this }
+                .configureEach { enabled = true }
+        }
+        repositories {
+            maven {
+                url = uri("file:build/repo")
+            }
+        }
+    }
+}
+
+//distributions {
+//    main {
+//        this.distributionBaseName
+//    }
+//}
 
 jreleaser {
     dryrun.set(rootProject.booleanProperty("jreleaser.dryrun"))
@@ -161,14 +184,36 @@ jreleaser {
 
     assemble {
         enabled.set(true)
-    }
 
-    packagers {
-        brew {
-            active.set(org.jreleaser.model.Active.RELEASE)
-            repoTap {
-                owner.set("yschimke")
-                formulaName.set("emulator-tools")
+        nativeImage {
+            create("emulator-tools") {
+                active.set(org.jreleaser.model.Active.ALWAYS)
+                exported.set(true)
+
+                addArg("--enable-https")
+                addArg("--no-fallback")
+                addArg("--allow-incomplete-classpath")
+                addArg("--report-unsupported-elements-at-runtime")
+
+                graal {
+                    path.set(File("/Library/Java/JavaVirtualMachines/graalvm-ce-java17-21.3.0/Contents/Home"))
+                }
+
+                mainJar {
+                    path.set(File("build/libs/emulator-tools-jvm-$version.jar"))
+                }
+
+                jars {
+                    directory.set(File("build/install/emulator-tools/lib"))
+                    pattern.set("*.jar")
+                }
+
+                files {
+                    pattern.set("LICENSE")
+                }
+                files {
+                    pattern.set("README.md")
+                }
             }
         }
     }
@@ -179,6 +224,16 @@ jreleaser {
         artifact {
             platform.set("osx")
             path.set(file("build/distributions/emulator-tools-graal-$version.zip"))
+        }
+    }
+
+    packagers {
+        brew {
+            active.set(org.jreleaser.model.Active.RELEASE)
+            repoTap {
+                owner.set("yschimke")
+                formulaName.set("emulator-tools")
+            }
         }
     }
 }
@@ -199,9 +254,9 @@ task("tagRelease") {
     }
 }
 
-fun VersionInfo.nextVersion() = when {
+fun net.nemerosa.versioning.VersionInfo.nextVersion() = when {
     this.tag == null && this.branch == "main" -> {
-        val matchResult = Regex("v(\\d+)\\.(\\d+)(?:.\\d+)").matchEntire(this.lastTag ?: "")
+        val matchResult = "(\\d+)\\.(\\d+)\\.(\\d+)".toRegex().matchEntire(this.lastTag ?: "")
         if (matchResult != null) {
             val (_, major, minor) = matchResult.groupValues
             "v$major.${minor.toInt() + 1}"
@@ -214,9 +269,9 @@ fun VersionInfo.nextVersion() = when {
     }
 }
 
-fun VersionInfo.effectiveVersion() = when {
-    this.tag == null && this.branch == "main" -> {
-        val matchResult = Regex("v(\\d+)\\.(\\d+)").matchEntire(this.lastTag ?: "")
+fun net.nemerosa.versioning.VersionInfo.effectiveVersion() = when {
+    this.tag == null -> {
+        val matchResult = "(\\d+)\\.(\\d+)\\.(\\d+)".toRegex().matchEntire(this.lastTag ?: "")
         if (matchResult != null) {
             val (_, major, minor) = matchResult.groupValues
             "$major.${minor.toInt() + 1}.0-SNAPSHOT"

@@ -1,13 +1,12 @@
 package ee.schimke.emulatortools
 
 import com.android.emulator.control.EmulatorControllerClient
-import com.baulsupp.oksocial.output.ConsoleHandler
-import com.baulsupp.oksocial.output.ResponseExtractor
 import com.squareup.wire.GrpcClient
 import ee.schimke.emulatortools.commands.BatteryCommand
 import ee.schimke.emulatortools.commands.LogcatCommand
 import ee.schimke.emulatortools.commands.ScreenshotCommand
-import ee.schimke.emulatortools.commands.WearScreenshotCommand
+import com.baulsupp.schoutput.outputHandlerInstance
+import com.baulsupp.schoutput.responses.ResponseExtractor
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okio.Buffer
@@ -20,13 +19,13 @@ import kotlin.system.exitProcess
   name = "emulatortools",
   description = ["Emulator tools."],
   mixinStandardHelpOptions = true,
-  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class, WearScreenshotCommand::class]
+  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class]
 )
 class Main : Closeable {
   @CommandLine.Option(names = ["--port"], hidden = true)
   var port: Int = 8554
 
-  val console = ConsoleHandler.instance(object : ResponseExtractor<ContentAndType> {
+  val console = outputHandlerInstance(object : ResponseExtractor<ContentAndType> {
     override fun filename(response: ContentAndType): String? = null
 
     override fun mimeType(response: ContentAndType): String? = response.mimetype
