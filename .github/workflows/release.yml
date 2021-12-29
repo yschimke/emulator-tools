@@ -22,6 +22,12 @@ jobs:
           java-version: 17
           distribution: 'zulu'
 
+      - uses: DeLaGuardo/setup-graalvm@5.0
+        with:
+          graalvm: '21.3.0'
+          java: 'java17'
+          arch: 'amd64'
+
       - name: Build Dist
         run: ./gradlew jar installDist
 
@@ -32,12 +38,6 @@ jobs:
         run: ./gradlew jreleaserConfig
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - uses: DeLaGuardo/setup-graalvm@5.0
-        with:
-          graalvm: '21.3.0'
-          java: 'java17'
-          arch: 'amd64'
 
       - name: Release
         run: ./gradlew jreleaserFullRelease
