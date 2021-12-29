@@ -30,10 +30,11 @@ jobs:
         env:
           JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: setup-graalvm
-        uses: rtc11/setup-graalvm@1.0
+      - uses: DeLaGuardo/setup-graalvm@5.0
         with:
-          args: https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-21.3.0/graalvm-ce-java17-darwin-amd64-21.3.0.tar.gz
+          graalvm: '21.3.0'
+          java: 'java17'
+          arch: 'amd64'
 
       - name: Release
         run: ./gradlew jreleaserFullRelease
