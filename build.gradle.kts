@@ -8,6 +8,18 @@ plugins {
     application
 }
 
+versioning {
+    scm = "git"
+    releaseParser = KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, net.nemerosa.versioning.ReleaseInfo>({ scmInfo, _ ->
+        if (scmInfo.tag != null && scmInfo.tag.matches("\\d+\\.\\d+\\.\\d+".toRegex())) {
+            net.nemerosa.versioning.ReleaseInfo("release", scmInfo.tag)
+        } else {
+            val parts = scmInfo.branch.split("/", limit = 2)
+            net.nemerosa.versioning.ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
+        }
+    })
+}
+
 group = "com.github.yschimke"
 version = versioning.info.effectiveVersion()
 
@@ -42,6 +54,13 @@ wire {
     kotlin {
         rpcRole = "client"
         rpcCallStyle = "suspending"
+    }
+}
+
+afterEvaluate {
+    val wireTask = tasks.withType<com.squareup.wire.gradle.WireTask>().single()
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        dependsOn(wireTask)
     }
 }
 
@@ -93,7 +112,6 @@ kotlin {
                 dependsOn(commonMain)
 
                 implementation(kotlin("stdlib-jdk8"))
-                implementation("io.grpc:grpc-kotlin-stub:1.2.0")
                 implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
 
                 implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
@@ -129,8 +147,10 @@ kotlin {
             }
         }
         val jsMain by getting {
+            dependsOn(commonMain)
             dependsOn(nonJvmMain)
             dependencies {
+                implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
             }
         }
         val jsTest by getting {
