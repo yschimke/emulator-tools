@@ -72,6 +72,10 @@ dependencies {
 
     api("com.squareup.wire:wire-runtime:4.0.1")
     api("com.squareup.wire:wire-grpc-client:4.0.1")
+
+    implementation("org.apache.commons:commons-imaging:1.0-alpha2")
+    implementation("net.imagej:ij:1.53h")
+    implementation("org.openimaj:core-image:1.3.10")
 }
 
 wire {
