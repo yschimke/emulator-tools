@@ -210,7 +210,7 @@ jreleaser {
                 addArg("--report-unsupported-elements-at-runtime")
 
                 graal {
-                    path.set(File("graalvm"))
+                    path.set(File(System.getenv("GRAALVM_HOME") ?: "/Library/Java/JavaVirtualMachines/graalvm-ce-java17-21.3.0/Contents/Home"))
                 }
 
                 mainJar {
