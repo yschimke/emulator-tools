@@ -6,5 +6,5 @@ import kotlin.system.exitProcess
 fun main() {
   LoggingUtil.configureLogging()
 
-  exitProcess(CommandLine(Main()).execute("screenshot"))
+  exitProcess(CommandLine(Main()).execute("wearscreenshot", "--display"))
 }

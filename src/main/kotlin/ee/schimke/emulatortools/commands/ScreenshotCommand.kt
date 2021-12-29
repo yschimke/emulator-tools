@@ -13,7 +13,7 @@ class ScreenshotCommand: CommandBase() {
 
   override suspend fun CoroutineScope.callFun() {
     val format = ImageFormat(format = ImageFormat.ImgFormat.PNG)
-    val screenshot = parent.client.getScreenshot().execute(format)
+    val screenshot = parent.emulatorController.getScreenshot().execute(format)
     parent.console.showOutput(ContentAndType(screenshot.image, mimetype = "image/png"))
   }
 }

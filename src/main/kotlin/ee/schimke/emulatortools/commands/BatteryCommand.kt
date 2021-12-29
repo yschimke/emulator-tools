@@ -10,7 +10,7 @@ class BatteryCommand: CommandBase() {
   lateinit var parent: Main
 
   override suspend fun CoroutineScope.callFun() {
-    val batteryStatus = parent.client.getBattery().execute(Unit)
+    val batteryStatus = parent.emulatorController.getBattery().execute(Unit)
     println(batteryStatus)
   }
 }

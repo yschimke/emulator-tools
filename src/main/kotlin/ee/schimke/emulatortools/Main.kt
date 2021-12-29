@@ -7,6 +7,7 @@ import com.squareup.wire.GrpcClient
 import ee.schimke.emulatortools.commands.BatteryCommand
 import ee.schimke.emulatortools.commands.LogcatCommand
 import ee.schimke.emulatortools.commands.ScreenshotCommand
+import ee.schimke.emulatortools.commands.WearScreenshotCommand
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okio.Buffer
@@ -19,7 +20,7 @@ import kotlin.system.exitProcess
   name = "emulatortools",
   description = ["Emulator tools."],
   mixinStandardHelpOptions = true,
-  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class]
+  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class, WearScreenshotCommand::class]
 )
 class Main : Closeable {
   @CommandLine.Option(names = ["--port"], hidden = true)
@@ -42,7 +43,7 @@ class Main : Closeable {
     .baseUrl("http://localhost:$port")
     .build()
 
-  val client = grpcClient.create(EmulatorControllerClient::class)
+  val emulatorController = grpcClient.create(EmulatorControllerClient::class)
 
   override fun close() {
   }
