@@ -128,6 +128,8 @@ kotlin {
 
                 api("com.squareup.wire:wire-runtime:4.0.1")
                 api("com.squareup.wire:wire-grpc-client:4.0.1")
+
+                implementation("dev.mobile:dadb:0.0.8")
             }
         }
         val jvmTest by getting {

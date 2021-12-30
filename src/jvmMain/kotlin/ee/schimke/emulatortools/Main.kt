@@ -7,6 +7,7 @@ import ee.schimke.emulatortools.commands.LogcatCommand
 import ee.schimke.emulatortools.commands.ScreenshotCommand
 import com.baulsupp.schoutput.outputHandlerInstance
 import com.baulsupp.schoutput.responses.ResponseExtractor
+import ee.schimke.emulatortools.devices.DeviceFinder
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okio.Buffer
@@ -34,6 +35,8 @@ class Main : Closeable {
       return Buffer().write(response.content)
     }
   })
+
+  val deviceFinder = DeviceFinder()
 
   val grpcClient = GrpcClient.Builder()
     .client(OkHttpClient.Builder()
