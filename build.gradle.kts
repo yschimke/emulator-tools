@@ -130,6 +130,7 @@ kotlin {
                 api("com.squareup.wire:wire-grpc-client:4.0.1")
 
                 implementation("dev.mobile:dadb:0.0.8")
+                implementation("com.malinskiy.adam:adam:0.4.3")
             }
         }
         val jvmTest by getting {

@@ -7,6 +7,7 @@ import ee.schimke.emulatortools.commands.LogcatCommand
 import ee.schimke.emulatortools.commands.ScreenshotCommand
 import com.baulsupp.schoutput.outputHandlerInstance
 import com.baulsupp.schoutput.responses.ResponseExtractor
+import ee.schimke.emulatortools.commands.WearScreenshotCommand
 import ee.schimke.emulatortools.devices.DeviceFinder
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -20,7 +21,7 @@ import kotlin.system.exitProcess
   name = "emulatortools",
   description = ["Emulator tools."],
   mixinStandardHelpOptions = true,
-  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class]
+  subcommands = [LogcatCommand::class, BatteryCommand::class, ScreenshotCommand::class, WearScreenshotCommand::class]
 )
 class Main : Closeable {
   @CommandLine.Option(names = ["--port"], hidden = true)
