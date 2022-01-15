@@ -5,7 +5,20 @@ plugins {
     id("net.nemerosa.versioning") version "2.15.0"
     id("com.squareup.wire") version "4.0.1"
     id("org.jreleaser") version "0.10.0"
+    id("com.palantir.graal") version "0.10.0"
     application
+}
+
+graal {
+    mainClass("ee.schimke.emulatortools.MainKt")
+    outputName("emulator-tools")
+    graalVersion("21.3.0")
+    javaVersion("11")
+
+    option("--enable-https")
+    option("--no-fallback")
+    option("--allow-incomplete-classpath")
+    option("--report-unsupported-elements-at-runtime")
 }
 
 versioning {
