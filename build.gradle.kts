@@ -1,23 +1,24 @@
 plugins {
-    kotlin("multiplatform") version "1.6.10"
-    kotlin("kapt") version "1.6.10"
+    kotlin("multiplatform") version "1.8.21"
+    kotlin("kapt") version "1.8.21"
     id("maven-publish")
-    id("net.nemerosa.versioning") version "2.15.0"
-    id("com.squareup.wire") version "4.0.1"
-    id("org.jreleaser") version "0.10.0"
+    id("net.nemerosa.versioning") version "3.0.0"
+    id("com.squareup.wire") version "4.7.0"
+    id("org.jreleaser") version "1.2.0"
     application
 }
 
 versioning {
     scm = "git"
-    releaseParser = KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, net.nemerosa.versioning.ReleaseInfo>({ scmInfo, _ ->
-        if (scmInfo.tag != null && scmInfo.tag.matches("\\d+\\.\\d+\\.\\d+".toRegex())) {
-            net.nemerosa.versioning.ReleaseInfo("release", scmInfo.tag)
-        } else {
-            val parts = scmInfo.branch.split("/", limit = 2)
-            net.nemerosa.versioning.ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
-        }
-    })
+    releaseParser =
+        KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, net.nemerosa.versioning.ReleaseInfo>({ scmInfo, _ ->
+            if (scmInfo.tag != null && scmInfo.tag.matches("\\d+\\.\\d+\\.\\d+".toRegex())) {
+                net.nemerosa.versioning.ReleaseInfo("release", scmInfo.tag)
+            } else {
+                val parts = scmInfo.branch.split("/", limit = 2)
+                net.nemerosa.versioning.ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
+            }
+        })
 }
 
 group = "com.github.yschimke"
@@ -67,44 +68,26 @@ afterEvaluate {
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.jvmTarget = "17"
         }
         withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
     }
-    js {
-        compilations.all {
-            kotlinOptions {
-                moduleKind = "umd"
-                sourceMap = true
-                metaInfo = true
-            }
-        }
-        nodejs {
-            testTask {
-                useMocha {
-                    timeout = "30s"
-                }
-            }
-        }
-        browser {
-        }
-    }
 
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("com.squareup.okio:okio:3.0.0")
-                api("com.github.yschimke.schoutput:schoutput:0.9.2")
-                api("com.squareup.wire:wire-grpc-client:4.0.1")
+                api("com.squareup.okio:okio:3.3.0")
+                api("com.github.yschimke.schoutput:schoutput:1.0.1")
+                api("com.squareup.wire:wire-grpc-client:4.7.0")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("com.squareup.okio:okio:3.0.0")
+                implementation("com.squareup.okio:okio:3.3.0")
             }
         }
         val jvmMain by getting {
@@ -112,53 +95,30 @@ kotlin {
                 dependsOn(commonMain)
 
                 implementation(kotlin("stdlib-jdk8"))
-                implementation("org.jetbrains.kotlin:kotlin-reflect:1.6.10")
+                implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
 
-                implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
+                implementation("com.github.yschimke.schoutput:schoutput:1.0.1")
+                implementation("javax.activation:activation:1.1.1")
 
-                implementation("info.picocli:picocli:4.6.2")
-                implementation("com.squareup.okio:okio:3.0.0")
+                implementation("info.picocli:picocli:4.7.4")
+                implementation("com.squareup.okio:okio:3.3.0")
                 implementation("javax.annotation:javax.annotation-api:1.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0")
-                implementation("org.slf4j:slf4j-jdk14:2.0.0-alpha0")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+                implementation("org.slf4j:slf4j-jdk14:2.0.7")
 
-                configurations["kapt"].dependencies.add(project.dependencies.create("info.picocli:picocli-codegen:4.6.2"))
-                compileOnly("org.graalvm.nativeimage:svm:21.2.0")
-                implementation("io.github.classgraph:classgraph:4.8.138")
+                compileOnly("org.graalvm.nativeimage:svm:22.3.2")
+                implementation("io.github.classgraph:classgraph:4.8.160")
 
-                api("com.squareup.wire:wire-runtime:4.0.1")
-                api("com.squareup.wire:wire-grpc-client:4.0.1")
+                api("com.squareup.wire:wire-runtime:4.7.0")
+                api("com.squareup.wire:wire-grpc-client:4.7.0")
 
-                implementation("dev.mobile:dadb:0.0.8")
+                implementation("dev.mobile:dadb:1.2.6")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("com.squareup.okio:okio:3.0.0")
-            }
-        }
-        val nonJvmMain by creating {
-            dependencies {
-                dependsOn(commonMain)
-            }
-        }
-        val nonJvmTest by creating {
-            dependencies {
-                dependsOn(commonTest)
-            }
-        }
-        val jsMain by getting {
-            dependsOn(commonMain)
-            dependsOn(nonJvmMain)
-            dependencies {
-                implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
-            }
-        }
-        val jsTest by getting {
-            dependencies {
-                dependsOn(nonJvmTest)
-                implementation(kotlin("test"))
+                implementation("com.squareup.okio:okio:3.3.0")
             }
         }
     }
@@ -192,7 +152,7 @@ jreleaser {
 
     release {
         github {
-            owner.set("yschimke")
+            repoOwner.set("yschimke")
             overwrite.set(true)
             skipTag.set(true)
         }
@@ -206,13 +166,30 @@ jreleaser {
                 active.set(org.jreleaser.model.Active.ALWAYS)
                 exported.set(true)
 
-                addArg("--enable-https")
-                addArg("--no-fallback")
-                addArg("--allow-incomplete-classpath")
-                addArg("--report-unsupported-elements-at-runtime")
+                arg("--enable-https")
+                arg("--no-fallback")
+                arg("--allow-incomplete-classpath")
+                arg("--report-unsupported-elements-at-runtime")
 
-                graal {
-                    path.set(File(System.getenv("GRAALVM_HOME") ?: "/Library/Java/JavaVirtualMachines/graalvm-ce-java17-21.3.0/Contents/Home"))
+                graalJdk {
+                    platform.set("osx-aarch_64")
+                    path.set(
+                        File(
+                            System.getenv("GRAALVM_HOME")
+                                ?: "/Users/yschimke/Library/Java/JavaVirtualMachines/graalvm-ce-17/Contents/Home"
+                        )
+                    )
+                }
+
+                if (System.getenv("GRAALVM_HOME") != null) {
+                    graalJdk {
+                        platform.set("linux-x86_64")
+                        path.set(
+                            File(
+                                System.getenv("GRAALVM_HOME")
+                            )
+                        )
+                    }
                 }
 
                 mainJar {
@@ -238,7 +215,7 @@ jreleaser {
         brew {
             active.set(org.jreleaser.model.Active.RELEASE)
             repoTap {
-                owner.set("yschimke")
+                repoOwner.set("yschimke")
                 formulaName.set("emulator-tools")
             }
         }
@@ -271,6 +248,7 @@ fun net.nemerosa.versioning.VersionInfo.nextVersion() = when {
             null
         }
     }
+
     else -> {
         null
     }
@@ -286,7 +264,11 @@ fun net.nemerosa.versioning.VersionInfo.effectiveVersion() = when {
             "0.0.1-SNAPSHOT"
         }
     }
+
     else -> {
         this.display
     }
 }
+
+tasks.maybeCreate("prepareKotlinIdeaImport")
+    .dependsOn("generateProtos")
