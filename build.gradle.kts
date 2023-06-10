@@ -10,14 +10,15 @@ plugins {
 
 versioning {
     scm = "git"
-    releaseParser = KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, net.nemerosa.versioning.ReleaseInfo>({ scmInfo, _ ->
-        if (scmInfo.tag != null && scmInfo.tag.matches("\\d+\\.\\d+\\.\\d+".toRegex())) {
-            net.nemerosa.versioning.ReleaseInfo("release", scmInfo.tag)
-        } else {
-            val parts = scmInfo.branch.split("/", limit = 2)
-            net.nemerosa.versioning.ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
-        }
-    })
+    releaseParser =
+        KotlinClosure2<net.nemerosa.versioning.SCMInfo, String, net.nemerosa.versioning.ReleaseInfo>({ scmInfo, _ ->
+            if (scmInfo.tag != null && scmInfo.tag.matches("\\d+\\.\\d+\\.\\d+".toRegex())) {
+                net.nemerosa.versioning.ReleaseInfo("release", scmInfo.tag)
+            } else {
+                val parts = scmInfo.branch.split("/", limit = 2)
+                net.nemerosa.versioning.ReleaseInfo(parts[0], parts.getOrNull(1) ?: "")
+            }
+        })
 }
 
 group = "com.github.yschimke"
@@ -151,7 +152,7 @@ jreleaser {
 
     release {
         github {
-//            owner.set("yschimke")
+            repoOwner.set("yschimke")
             overwrite.set(true)
             skipTag.set(true)
         }
@@ -165,13 +166,30 @@ jreleaser {
                 active.set(org.jreleaser.model.Active.ALWAYS)
                 exported.set(true)
 
-//                addArg("--enable-https")
-//                addArg("--no-fallback")
-//                addArg("--allow-incomplete-classpath")
-//                addArg("--report-unsupported-elements-at-runtime")
+                arg("--enable-https")
+                arg("--no-fallback")
+                arg("--allow-incomplete-classpath")
+                arg("--report-unsupported-elements-at-runtime")
 
-                graal {
-                    path.set(File(System.getenv("GRAALVM_HOME") ?: "/Library/Java/JavaVirtualMachines/graalvm-ce-java17-21.3.0/Contents/Home"))
+                graalJdk {
+                    platform.set("osx-aarch_64")
+                    path.set(
+                        File(
+                            System.getenv("GRAALVM_HOME")
+                                ?: "/Users/yschimke/Library/Java/JavaVirtualMachines/graalvm-ce-17/Contents/Home"
+                        )
+                    )
+                }
+
+                if (System.getenv("GRAALVM_HOME") != null) {
+                    graalJdk {
+                        platform.set("linux-x86_64")
+                        path.set(
+                            File(
+                                System.getenv("GRAALVM_HOME")
+                            )
+                        )
+                    }
                 }
 
                 mainJar {
@@ -197,7 +215,7 @@ jreleaser {
         brew {
             active.set(org.jreleaser.model.Active.RELEASE)
             repoTap {
-//                owner.set("yschimke")
+                repoOwner.set("yschimke")
                 formulaName.set("emulator-tools")
             }
         }
@@ -230,6 +248,7 @@ fun net.nemerosa.versioning.VersionInfo.nextVersion() = when {
             null
         }
     }
+
     else -> {
         null
     }
@@ -245,6 +264,7 @@ fun net.nemerosa.versioning.VersionInfo.effectiveVersion() = when {
             "0.0.1-SNAPSHOT"
         }
     }
+
     else -> {
         this.display
     }

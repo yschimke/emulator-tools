@@ -21,11 +21,12 @@ jobs:
           java-version: 17
           distribution: 'zulu'
 
-      - uses: DeLaGuardo/setup-graalvm@5.0
+      - uses: graalvm/setup-graalvm@v1
         with:
-          graalvm: '21.3.0'
-          java: 'java17'
-          arch: 'amd64'
+          version: 'latest'
+          java-version: '17'
+          components: 'native-image'
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: ./gradlew check
