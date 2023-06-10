@@ -66,10 +66,10 @@ afterEvaluate {
 
 kotlin {
     jvm {
-//        compilations.all {
-//            kotlinOptions.jvmTarget = "1.8"
-//        }
-//        withJava()
+        compilations.all {
+            kotlinOptions.jvmTarget = "17"
+        }
+        withJava()
         testRuns["test"].executionTask.configure {
             useJUnitPlatform()
         }
@@ -79,7 +79,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("com.squareup.okio:okio:3.3.0")
-                api("com.github.yschimke.schoutput:schoutput:0.9.2")
+                api("com.github.yschimke.schoutput:schoutput:1.0.1")
                 api("com.squareup.wire:wire-grpc-client:4.7.0")
             }
         }
@@ -96,7 +96,8 @@ kotlin {
                 implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
 
-                implementation("com.github.yschimke.schoutput:schoutput:0.9.2")
+                implementation("com.github.yschimke.schoutput:schoutput:1.0.1")
+                implementation("javax.activation:activation:1.1.1")
 
                 implementation("info.picocli:picocli:4.7.4")
                 implementation("com.squareup.okio:okio:3.3.0")
