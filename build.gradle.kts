@@ -94,7 +94,6 @@ kotlin {
             dependencies {
                 dependsOn(commonMain)
 
-                implementation(kotlin("stdlib-jdk8"))
                 implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
 
                 implementation("com.github.yschimke.schoutput:schoutput:1.0.1")

@@ -4,6 +4,7 @@ import com.android.emulator.control.EmulatorControllerClient
 import com.baulsupp.schoutput.outputHandlerInstance
 import com.baulsupp.schoutput.responses.ResponseExtractor
 import com.squareup.wire.GrpcClient
+import dadb.Dadb
 import ee.schimke.emulatortools.commands.BatteryCommand
 import ee.schimke.emulatortools.commands.LogcatCommand
 import ee.schimke.emulatortools.commands.ScreenshotCommand
@@ -28,7 +29,7 @@ import kotlin.system.exitProcess
 )
 class Main : Closeable {
     @CommandLine.Option(names = ["--port"], hidden = true)
-    var port: Int = 8554
+    var port: Int? = null
 
     val console = outputHandlerInstance(object : ResponseExtractor<ContentAndType> {
         override fun filename(response: ContentAndType): String? = null
@@ -42,7 +43,7 @@ class Main : Closeable {
 
     val deviceFinder = DeviceFinder()
 
-    // https://cs.android.com/android-studio/platform/tools/adt/idea/+/mirror-goog-studio-main:streaming/src/com/android/tools/idea/streaming/emulator/RunningEmulatorCatalog.kt
+    val realPort = port ?: Dadb.list().firstNotNullOf { it.toString().substringAfter('-').toIntOrNull()?.let { it + 3000 } }
 
     val grpcClient = GrpcClient.Builder()
         .client(OkHttpClient.Builder()
@@ -51,7 +52,7 @@ class Main : Closeable {
                 it.proceed(addEmulatorAuth(it.request()))
             }
             .build())
-        .baseUrl("http://localhost:$port")
+        .baseUrl("http://localhost:$realPort")
         .build()
 
     private fun addEmulatorAuth(request: Request): Request {
@@ -68,6 +69,7 @@ class Main : Closeable {
         }
     }
 
+    // https://cs.android.com/android-studio/platform/tools/adt/idea/+/mirror-goog-studio-main:streaming/src/com/android/tools/idea/streaming/emulator/RunningEmulatorCatalog.kt
     val homeDir = System.getenv("HOME").toPath()
     val runningDir = homeDir / "Library/Caches/TemporaryItems/avd/running/"
 
