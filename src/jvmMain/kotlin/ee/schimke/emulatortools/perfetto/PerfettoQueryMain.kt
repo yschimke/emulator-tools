@@ -1,55 +1,60 @@
 package ee.schimke.emulatortools.perfetto
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import okhttp3.logging.HttpLoggingInterceptor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okio.IOException
+import okio.Path
 import okio.Path.Companion.toPath
 import perfetto.protos.QueryArgs
 
-suspend fun main() {
-    val client = buildClient()
+suspend fun main() = perfettoSession {
+    withTraceFile("/Users/yschimke/Downloads/sample.perfetto-trace".toPath()) {
+        val result =
+            query(QueryArgs("select ts, t.name, value from counter as c left join counter_track t on c.track_id = t.id where t.name = 'batt.current_ua'"))
+                .getOrThrow()
 
-    client.clear()
+        val columnNames = result.column_names
+        println(columnNames.joinToString("\t"))
+        val rows = QueryResultIterator(result).asSequence()
+        rows.forEach { row ->
+            println(row.entries.joinToString("\t") { it.value.toString() })
+        }
+    }
+}
 
-    val uploadResult = client.uploadFile("/Users/yschimke/Downloads/3b9b76cb-e56c-4eda-bbbe-748e3d54f07c".toPath()).getOrThrow()
+suspend fun perfettoSession(block: suspend PerfettoHttpClient.() -> Unit) {
+    withContext(Dispatchers.Default) {
+        val service = PerfettoHttpService()
+        val server = launch {
+            service.run()
+        }
+
+        val client = PerfettoHttpClient(service.url)
+
+        client.block()
+
+        server.cancel()
+        client.close()
+    }
+}
+
+suspend fun PerfettoHttpClient.withTraceFile(traceFile: Path, block: suspend PerfettoHttpClient.() -> Unit) {
+    uploadFile(traceFile)
+
+    try {
+        block()
+    } finally {
+        clear()
+    }
+}
+
+suspend fun PerfettoHttpClient.uploadFile(traceFile: Path) {
+    clear()
+
+    val uploadResult = uploadFile(traceFile).getOrThrow()
     if (uploadResult.error != null) {
         throw IOException(uploadResult.error)
     }
-
-    val result =
-        client.query(QueryArgs("select ts, t.name, value from counter as c left join counter_track t on c.track_id = t.id where t.name = 'batt.current_ua'"))
-            .getOrThrow()
-
-    println(result.column_names.joinToString("\t"))
-    result.batch.forEach {
-        println(it)
-        println(it.is_last_batch)
-    }
 }
 
-private fun buildClient(): PerfettoHttpService {
-    val ktor = HttpClient(OkHttp) {
-        expectSuccess = true
-
-        engine {
-            addInterceptor(HttpLoggingInterceptor().apply {
-                setLevel(
-                    HttpLoggingInterceptor.Level.BODY
-                )
-            })
-        }
-
-        defaultRequest {
-            url("http://localhost:8081")
-        }
-
-        install(ContentNegotiation) {
-            register(PerfettoHttpService.xProtobuf, ProtoConverter())
-        }
-    }
-
-    return PerfettoHttpService(ktor)
-}

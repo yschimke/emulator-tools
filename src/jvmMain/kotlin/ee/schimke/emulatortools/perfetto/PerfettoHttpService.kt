@@ -1,49 +1,33 @@
+@file:OptIn(InternalCoroutinesApi::class)
+
 package ee.schimke.emulatortools.perfetto
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import okio.FileSystem
-import okio.Path
-import perfetto.protos.AppendTraceDataResult
-import perfetto.protos.QueryArgs
-import perfetto.protos.QueryResult
+import com.github.pgreze.process.Redirect
+import com.github.pgreze.process.process
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import java.net.ServerSocket
 
-class PerfettoHttpService(val ktor: HttpClient) {
-  suspend fun clear() {
-    runCatching {
-      ktor.get("/restore_initial_tables") {
-        contentType(xProtobuf)
-      }
-    }
-  }
-  suspend fun query(args: QueryArgs): Result<QueryResult> = rawQuery(args)
+class PerfettoHttpService(
+    val port: Int = ServerSocket(0).use { it.localPort }
+) {
 
-  private suspend inline fun <reified T> rawQuery(args: QueryArgs): Result<T> = runCatching {
-      ktor.post("/query") {
-        contentType(xProtobuf)
-        setBody(args)
-      }.body<T>()
-    }
+    val url: HttpUrl
+        get() = "http://localhost:$port".toHttpUrl()
 
-  suspend fun uploadFile(traceFile: Path): Result<AppendTraceDataResult> {
-    // TODO chunk to 64MB
-    val bytes = FileSystem.SYSTEM.read(traceFile) {
-      readByteArray()
+    // https://android.googlesource.com/platform/external/perfetto/+/master/tools/trace_processor
+    suspend fun run() = withContext(Dispatchers.IO) {
+        process("bin/trace_processor", "-D", "--http-port", "$port", stderr = Redirect.CAPTURE) {
+            if (it.startsWith("Failed to listen on")) {
+                throw IllegalStateException(it)
+            }
+        }
     }
-    return runCatching {
-      ktor.post("/parse") {
-        contentType(ContentType.parse("application/octet-stream"))
-        setBody(bytes)
-      }.body<AppendTraceDataResult>()
-    }
-  }
+}
 
-  companion object {
-    val xProtobuf = ContentType.parse("application/x-protobuf")
-  }
+suspend fun main() {
+    PerfettoHttpService().run()
 }
