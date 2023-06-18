@@ -82,6 +82,8 @@ kotlin {
                 api("com.squareup.okio:okio:3.3.0")
                 api("com.github.yschimke.schoutput:schoutput:1.0.1")
                 api("com.squareup.wire:wire-grpc-client:4.7.0")
+
+                api("io.ktor:ktor-client-core:2.3.1")
             }
         }
         val commonTest by getting {
@@ -103,6 +105,7 @@ kotlin {
                 implementation("com.squareup.okio:okio:3.3.0")
                 implementation("javax.annotation:javax.annotation-api:1.3.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.7.1")
                 implementation("org.slf4j:slf4j-jdk14:2.0.7")
 
                 compileOnly("org.graalvm.nativeimage:svm:22.3.2")
@@ -110,6 +113,12 @@ kotlin {
 
                 api("com.squareup.wire:wire-runtime:4.7.0")
                 api("com.squareup.wire:wire-grpc-client:4.7.0")
+
+                implementation("io.ktor:ktor-client-okhttp:2.3.1")
+                implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.11")
+                implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.1")
+                implementation("com.github.pgreze:kotlin-process:1.4.1")
 
                 implementation("dev.mobile:dadb:1.2.6")
             }
