@@ -10,7 +10,8 @@ class BatteryCommand: CommandBase() {
   lateinit var parent: Main
 
   override suspend fun CoroutineScope.callFun() {
-    val batteryStatus = parent.emulatorController.getBattery().execute(Unit)
+    val emulatorController = parent.emulatorController ?: throw Exception("No Grpc Controller Found")
+    val batteryStatus = emulatorController.getBattery().execute(Unit)
     println(batteryStatus)
   }
 }
