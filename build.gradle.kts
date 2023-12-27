@@ -1,9 +1,9 @@
 plugins {
-    kotlin("multiplatform") version "1.8.21"
-    kotlin("kapt") version "1.8.21"
+    kotlin("multiplatform") version "1.9.21"
+    kotlin("kapt") version "1.9.21"
     id("maven-publish")
     id("net.nemerosa.versioning") version "3.0.0"
-    id("com.squareup.wire") version "4.7.0"
+    id("com.squareup.wire") version "4.9.3"
     id("org.jreleaser") version "1.2.0"
     application
 }
@@ -79,45 +79,43 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("com.squareup.okio:okio:3.3.0")
+                api("com.squareup.okio:okio:3.7.0")
                 api("com.github.yschimke.schoutput:schoutput:1.0.1")
-                api("com.squareup.wire:wire-grpc-client:4.7.0")
+                api("com.squareup.wire:wire-grpc-client:4.9.3")
             }
         }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("com.squareup.okio:okio:3.3.0")
+                implementation("com.squareup.okio:okio:3.7.0")
             }
         }
         val jvmMain by getting {
             dependencies {
-                dependsOn(commonMain)
-
-                implementation("org.jetbrains.kotlin:kotlin-reflect:1.8.21")
+                implementation("org.jetbrains.kotlin:kotlin-reflect:1.9.21")
 
                 implementation("com.github.yschimke.schoutput:schoutput:1.0.1")
                 implementation("javax.activation:activation:1.1.1")
 
-                implementation("info.picocli:picocli:4.7.4")
-                implementation("com.squareup.okio:okio:3.3.0")
+                implementation("info.picocli:picocli:4.7.5")
+                implementation("com.squareup.okio:okio:3.7.0")
                 implementation("javax.annotation:javax.annotation-api:1.3.2")
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
-                implementation("org.slf4j:slf4j-jdk14:2.0.7")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+                implementation("org.slf4j:slf4j-jdk14:2.0.9")
 
-                compileOnly("org.graalvm.nativeimage:svm:22.3.2")
-                implementation("io.github.classgraph:classgraph:4.8.160")
+                compileOnly("org.graalvm.nativeimage:svm:23.1.1")
+                implementation("io.github.classgraph:classgraph:4.8.165")
 
-                api("com.squareup.wire:wire-runtime:4.7.0")
-                api("com.squareup.wire:wire-grpc-client:4.7.0")
+                api("com.squareup.wire:wire-runtime:4.9.3")
+                api("com.squareup.wire:wire-grpc-client:4.9.3")
 
-                implementation("dev.mobile:dadb:1.2.6")
+                implementation("dev.mobile:dadb:1.2.7")
             }
         }
         val jvmTest by getting {
             dependencies {
                 implementation(kotlin("test"))
-                implementation("com.squareup.okio:okio:3.3.0")
+                implementation("com.squareup.okio:okio:3.7.0")
             }
         }
     }
@@ -142,7 +140,6 @@ jreleaser {
     dryrun.set(rootProject.booleanProperty("jreleaser.dryrun"))
 
     project {
-        website.set("https://github.com/yschimke/emulator-tools")
         description.set("Android Emulator Tools")
         authors.set(listOf("yschimke"))
         license.set("Apache-2.0")
@@ -223,7 +220,7 @@ jreleaser {
 
 fun Project.booleanProperty(name: String) = this.findProperty(name).toString().toBoolean()
 
-fun Project.booleanEnv(name: String) = (System.getenv(name) as String?).toString().toBoolean()
+fun booleanEnv(name: String) = System.getenv(name).toString().toBoolean()
 
 task("tagRelease") {
     doLast {

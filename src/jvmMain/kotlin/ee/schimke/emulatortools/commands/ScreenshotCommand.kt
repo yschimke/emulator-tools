@@ -13,7 +13,8 @@ class ScreenshotCommand: CommandBase() {
 
   override suspend fun CoroutineScope.callFun() {
     val format = ImageFormat(format = ImageFormat.ImgFormat.PNG)
-    val screenshot = parent.emulatorController.getScreenshot().execute(format)
+    val emulatorController = parent.emulatorController ?: throw Exception("No Grpc Controller Found")
+    val screenshot = emulatorController.getScreenshot().execute(format)
     parent.console.showOutput(ContentAndType(screenshot.image, mimetype = "image/png"))
   }
 }
