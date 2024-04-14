@@ -12,7 +12,8 @@ class LogcatCommand: CommandBase() {
   lateinit var parent: Main
 
   override suspend fun CoroutineScope.callFun() {
-    val (request, logs) = parent.emulatorController.streamLogcat().executeIn(this)
+    val emulatorController = parent.emulatorController ?: throw Exception("No Grpc Controller Found")
+    val (request, logs) = emulatorController.streamLogcat().executeIn(this)
     request.send(LogMessage(sort = LogMessage.LogType.Parsed))
     logs.receiveAsFlow().collect {
       it.entries.forEach { log ->
