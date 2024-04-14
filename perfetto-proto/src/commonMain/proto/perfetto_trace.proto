@@ -8746,7 +8746,6 @@ message FtraceEvent {
 
   oneof event {
     PrintFtraceEvent print = 3;
-    /*
     SchedSwitchFtraceEvent sched_switch = 4;
     // removed field with id 5;
     // removed field with id 6;
@@ -9248,7 +9247,6 @@ message FtraceEvent {
     SamsungTracingMarkWriteFtraceEvent samsung_tracing_mark_write = 484;
     BinderCommandFtraceEvent binder_command = 485;
     BinderReturnFtraceEvent binder_return = 486;
-    */
   }
 }
 
