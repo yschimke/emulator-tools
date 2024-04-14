@@ -10,6 +10,8 @@ wire {
     }
 
     kotlin {
+        boxOneOfsMinSize = 100
+
         rpcRole = "client"
         rpcCallStyle = "suspending"
     }
