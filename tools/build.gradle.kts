@@ -33,9 +33,8 @@ kotlin {
                 api("com.squareup.wire:wire-grpc-client:4.9.9")
 
                 api("io.ktor:ktor-client-core:2.3.1")
-
-                api(projects.emulatorProto)
-                api(projects.perfettoProto)
+                api("androidx.benchmark:benchmark-traceprocessor:1.4.0-SNAPSHOT")
+                api("androidx.annotation:annotation:1.9.0-SNAPSHOT")
             }
         }
         val commonTest by getting {
