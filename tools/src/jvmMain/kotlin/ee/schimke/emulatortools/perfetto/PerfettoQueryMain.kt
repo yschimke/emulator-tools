@@ -1,34 +1,50 @@
 package ee.schimke.emulatortools.perfetto
 
-import androidx.benchmark.traceprocessor.PerfettoTrace
 import androidx.benchmark.traceprocessor.Row
-import androidx.benchmark.traceprocessor.TraceProcessor
+import kotlinx.coroutines.runBlocking
+import okio.Closeable
+import okio.Path.Companion.toPath
+import picocli.CommandLine
 
-suspend fun main() = TraceProcessor.runServer {
-  loadTrace(PerfettoTrace("/Users/yschimke/Downloads/sample.perfetto-trace")) {
-    val result: Sequence<Row> =
-      query("select ts, t.name, value from counter as c left join counter_track t on c.track_id = t.id where t.name = 'batt.current_ua'")
+@CommandLine.Command(
+  name = "perfettoquery",
+  description = ["Perfetto Query"],
+  mixinStandardHelpOptions = true,
+)
+class PerfettoQueryMain: Closeable, Runnable {
+  @CommandLine.Option(names = ["--traceProcessor", "-p"])
+  var traceProcessor: String? = null
 
-    lateinit var columnNames: List<String>
-    result.forEachIndexed { index, row ->
-      if (index == 0) {
-        columnNames = row.keys.toList()
-        println(columnNames.joinToString("\t"))
+  @CommandLine.Option(names = ["--traceFile", "-t"], required = true)
+  lateinit var traceFile: String
+
+  @CommandLine.Option(names = ["--query", "-q"], required = true)
+  lateinit var query: String
+
+  override fun run() = runBlocking {
+    LocalTraceProcessor.runServerForQuery(
+      traceFile = traceFile.toPath(),
+      traceProcessor = traceProcessor?.toPath()
+    ) {
+      val result: Sequence<Row> = query(query)
+
+      lateinit var columnNames: List<String>
+      result.forEachIndexed { index, row ->
+        if (index == 0) {
+          columnNames = row.keys.toList()
+          println(columnNames.joinToString("\t"))
+        }
+
+        println(columnNames.map { row[it] }.joinToString("\t") { it.toString() })
       }
-
-      println(columnNames.map { row[it] }.joinToString("\t") { it.toString() })
     }
+  }
+
+  override fun close() {
   }
 }
 
-private suspend fun TraceProcessor.Companion.runServer(block: TraceProcessor.() -> Unit) {
-  LocalTraceProcessor.runServer(
-    eventCallback = object : TraceProcessor.EventCallback {
-      override fun onLoadTraceFailure(trace: PerfettoTrace, throwable: Throwable) {
-        throwable.printStackTrace()
-      }
-    },
-    block = block
-  )
+fun main(vararg args: String) {
+  CommandLine(PerfettoQueryMain()).execute(*args)
 }
 

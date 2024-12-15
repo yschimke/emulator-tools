@@ -68,7 +68,7 @@ kotlin {
                 implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.11")
                 implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.11")
                 implementation("io.ktor:ktor-client-content-negotiation:2.3.1")
-                implementation("com.github.pgreze:kotlin-process:1.4.1")
+                implementation("com.github.pgreze:kotlin-process:1.5")
 
                 implementation("dev.mobile:dadb:1.2.7")
             }
