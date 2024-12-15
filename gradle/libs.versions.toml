@@ -1,0 +1,6 @@
+[versions]
+
+[libraries]
+wire-grpc = "com.squareup.wire:wire-grpc-client:4.9.9"
+
+[plugins]

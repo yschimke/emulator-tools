@@ -17,7 +17,7 @@ application {
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "17"
+            kotlinOptions.jvmTarget = "21"
         }
         withJava()
         testRuns["test"].executionTask.configure {
@@ -35,6 +35,8 @@ kotlin {
                 api("io.ktor:ktor-client-core:2.3.1")
                 api("androidx.benchmark:benchmark-traceprocessor:1.4.0-SNAPSHOT")
                 api("androidx.annotation:annotation:1.9.0-SNAPSHOT")
+
+                api(projects.emulatorProto)
             }
         }
         val commonTest by getting {

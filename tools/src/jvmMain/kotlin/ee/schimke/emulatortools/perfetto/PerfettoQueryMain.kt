@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalTraceProcessorApi::class)
-
 package ee.schimke.emulatortools.perfetto
 
-import androidx.benchmark.traceprocessor.ExperimentalTraceProcessorApi
 import androidx.benchmark.traceprocessor.PerfettoTrace
 import androidx.benchmark.traceprocessor.Row
 import androidx.benchmark.traceprocessor.TraceProcessor
@@ -22,5 +19,16 @@ suspend fun main() = TraceProcessor.runServer {
       println(columnNames.map { row[it] }.joinToString("\t") { it.toString() })
     }
   }
+}
+
+private suspend fun TraceProcessor.Companion.runServer(block: TraceProcessor.() -> Unit) {
+  LocalTraceProcessor.runServer(
+    eventCallback = object : TraceProcessor.EventCallback {
+      override fun onLoadTraceFailure(trace: PerfettoTrace, throwable: Throwable) {
+        throwable.printStackTrace()
+      }
+    },
+    block = block
+  )
 }
 
