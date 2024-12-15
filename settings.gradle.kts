@@ -18,13 +18,15 @@ dependencyResolutionManagement {
                 includeGroup("com.github.yschimke.schoutput")
             }
         }
+        maven {
+            url = uri("https://androidx.dev/snapshots/builds/12801052/artifacts/repository")
+        }
     }
 }
 
 include(
     "tools",
-    "perfetto-proto",
-    "emulator-proto"
+    "emulator-proto",
 )
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")

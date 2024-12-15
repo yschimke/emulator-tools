@@ -18,7 +18,7 @@ wire {
 kotlin {
     jvm {
         compilations.all {
-            kotlinOptions.jvmTarget = "17"
+            kotlinOptions.jvmTarget = "21"
         }
         withJava()
         testRuns["test"].executionTask.configure {
